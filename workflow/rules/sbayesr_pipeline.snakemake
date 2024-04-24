@@ -1,0 +1,297 @@
+include: "preprocess_forPRS_debug.snakefile"
+import re
+
+wildcard_constraints:
+    chrom="\d+"
+
+# ----------------------------------------
+# Suggest to run this only on HM3 plus SNPs
+# ----------------------------------------
+
+
+# rule all2:
+  # input:
+    # expand('tmp-data/ldm_{cc}.ldm.shrunk', cc=range(1,23))
+    # 'tmp-data/gwas_tmp.ma'
+    # expand('data/ldm/{dataset}/block{chrom}.ldm.bin', dataset=['chris'], chrom=range(1,23))
+    # "results/hm3/betas_sbayes_chrall.snpRes"
+    # expand("results/hm3/betas_sbayes_chr{cc}.snpRes", cc=range(1,23))
+    # 'tmp-data/gwas_tmp.ma',
+    # 'tmp-data/df_beta_bayes.rds'
+
+
+# checkpoint ldm_sBayes:
+#   input:
+#     bed = 'data/geno/{dataset}/qc_geno_chr{chrom}.bed',
+#     bim = 'data/geno/{dataset}/qc_geno_chr{chrom}.bim',
+#     fam = 'data/geno/{dataset}/qc_geno_chr{chrom}.fam',
+#     posfile = 'data/ref4cM_v37.pos'
+#   output:
+#     ldm = 'data/ldm/{dataset}/block{chrom}{blkid}.ldm.bin'
+#   params:
+#     prefixi=lambda wildcars, input: input.bed.replace(".bed", ""),
+#     prefixo=lambda wildcars, output: os.path.dirname(output.ldm) 
+#   threads: 8
+#   resources:
+#     mem_mb=64000
+#   shell:
+#     """
+#     gctb --bfile {params.prefixi} --make-block-ldm --block-info {input.posfile} --out {params.prefixo} --thread {threads}
+#     """
+
+rule allb:
+  input:
+    expand('data/ldm/{dataset}/qc_ldm_sparse_chr{chrom}.ldm.sparse.bin', dataset=['hm3'], chrom=range(1,23))
+    # expand('data/ldm/{dataset}/qc_ldm_sparse_chr{chrom}.sparse', dataset=['hm3'], chrom=range(1,23))
+
+rule allprs:
+  input:
+    expand("results/{dataset}/sbayesR/betas_sbayes_chr{chrom}.mcmcsamples", dataset=['hm3'], chrom=range(1,23))
+
+
+rule shrunk_mat:
+  input:
+    bed = 'data/geno/{dataset}/qc_geno_chr{chrom}.bed',
+    bim = 'data/geno/{dataset}/qc_geno_chr{chrom}.bim',
+    fam = 'data/geno/{dataset}/qc_geno_chr{chrom}.fam',
+    map_data = "tmp-data/chr{chrom}.OMNI.interpolated_genetic_map"
+  output:
+    shrunk_mat = 'data/ldm/{dataset}/qc_ldm_shrunk_chr{chrom}.ldm.shrunk.bin',
+    shrunk_info = 'data/ldm/{dataset}/qc_ldm_shrunk_chr{chrom}.ldm.shrunk.info'
+  params:
+    prefixi = lambda wildcars, input: input.bed.replace(".bed", ""),
+    prefixo = lambda wildcars, output: output.shrunk_mat.replace(".ldm.shrunk.bin", "")
+  resources:
+    mem_mb = 32000
+  shell:
+    """
+    gctb --bfile {params.prefixi} --make-shrunk-ldm \
+    --ne 13447 \
+    --out {params.prefixo} \
+    """
+
+rule shrunk_to_sparse:
+  input:
+    shrunk_mat = 'data/ldm/{dataset}/qc_ldm_shrunk_chr{chrom}.ldm.shrunk.bin',
+    shrunk_info = 'data/ldm/{dataset}/qc_ldm_shrunk_chr{chrom}.ldm.shrunk.info'
+  output:
+    sparse_mat = 'data/ldm/{dataset}/qc_ldm_sparse_chr{chrom}.ldm.sparse.bin',
+    sparse_info = 'data/ldm/{dataset}/qc_ldm_sparse_chr{chrom}.ldm.sparse.info'
+  params:
+    prefixi=lambda wildcars, input: input.shrunk_mat.replace(".bin", ""),
+    prefixo=lambda wildcars, output: output.sparse_mat.replace(".ldm.sparse.bin", "")
+  resources:
+    mem_mb = 32000
+  shell:
+    """
+    gctb --ldm {params.prefixi} \
+    --make-sparse-ldm \
+    --chisq 0 \
+    --out {params.prefixo} \
+    """
+
+
+checkpoint ldm_sBayes:
+  input:
+    bed = 'data/geno/{dataset}/qc_geno_chr{chrom}.bed',
+    bim = 'data/geno/{dataset}/qc_geno_chr{chrom}.bim',
+    fam = 'data/geno/{dataset}/qc_geno_chr{chrom}.fam',
+    posfile = 'data/ref4cM_v37.pos'
+  output:
+    # ldm = 'data/ldm/{dataset}/block{chrom}.ldm.bin'
+    ldm = directory('data/ldm/{dataset}/{chrom}')
+  params:
+    prefixi=lambda wildcars, input: input.bed.replace(".bed", ""),
+    prefixo=lambda wildcars, output: os.path.dirname(output.ldm) 
+  threads: 8
+  resources:
+    mem_mb=64000
+  shell:
+    """
+    gctb --bfile {params.prefixi} --make-block-ldm --block-info {input.posfile} --out {params.prefixo} --thread {threads}
+    touch {output.ldm}/computed_{wildcards.chrom}.lock
+    """
+
+def get_bfiles(wildcards):
+  ck_output = checkpoints.ldm_sBayes.get(chrom=1, dataset="chris").params['prefixo']
+  # outdir = os.path.dirname(ck_output)
+  outdir = ck_output
+  SMP, = glob_wildcards(os.path.join(outdir, "block{blkid}.ldm.bin"))
+  return expand(os.path.join(outdir, "block{BLKID}.ldm.bin"), BLKID=SMP)
+
+
+rule ldm_merge:
+  input:
+    ldmin = get_bfiles
+  output:
+    snp = 'data/ldm/{dataset}/snp.info',
+    ldm = 'data/ldm/{dataset}/ldm.info'
+  resources:
+    mem_mb=12000
+  params:
+    prefixo=lambda wildcars, input: os.path.dirname(input.ldmin[0])
+  shell:
+    """
+    gctb --ldm {params.prefixo} --merge-block-ldm-info --out {params.prefixo}
+    """
+
+def get_id(wildcards):
+  ck_output = checkpoints.ldm_sBayes.get(chrom=1, dataset="chris").params['prefixo']
+  # outdir = os.path.dirname(ck_output)
+  outdir = ck_output
+  SMP, = glob_wildcards(os.path.join(outdir, "block{blkid}.ldm.bin"))
+  return  SMP
+
+rule all_tmp:
+  input:
+    lambda wildcards: expand("data/ldm/chris/block{blkid}.eigen.bin", blkid=get_id(wildcards))
+
+rule ldm_eigen_sBayes:
+  input:
+    ldm = 'data/ldm/{dataset}/block{blkid}.ldm.bin',
+    snpinfo = 'data/ldm/{dataset}/snp.info',
+    ldminfo = 'data/ldm/{dataset}/ldm.info',
+  output:
+    ldmout = 'data/ldm/{dataset}/block{blkid}.eigen.bin'
+  params:
+    prefixi=lambda wildcars, input: os.path.dirname(ldm)
+  resources:
+    mem_mb=24000
+  shell:
+    """
+    gctb --ldm {params.prefixi} --make-ldm-eigen --block {wildcards.blkid} --out {params.prefixi} 
+    """
+    
+
+rule sbayes_impute_gwas:
+  input:
+    blockfile = 'data/ldm/{dataset}/block{blkid}.eigen.bin',
+    gwas = 'tmp-data/{dataset}/gwas_tmp.ma'
+  output:
+    resma = 'tmp-data/{dataset}/sbayesR/test.block{blkid}.imputed.ma'
+  params:
+    prefixo = lambda wildcards, output: output.resma.replace('.ma', ''),
+    prefixi = lambda wildcards, input: os.path.dirname(input.blockfile),
+    outparam = lambda wildcards, output: os.path.dirname(output.resma)
+  shell:
+    """
+    gctb --ldm-eigen {params.prefixi} 
+    --gwas-summary {input.gwas} 
+    --impute-summary
+    --block {wildcards.blkid}
+    --out {params.outparam}
+    """
+
+def get_allfiles(wildcards):
+  ck_output = checkpoints.sbayes_impute_gwas.get(**wildcards).output[0]
+  SMP, = glob_wildcards(os.path.join(ck_output, "test.block{id}.imputed.ma"))
+  return expand(os.path.join(ck_output, "test.block{BLKID}.imputed.ma"), BLKID=SMP)
+
+rule sbayes_impute_merge:
+  input:
+    # resma1 = get_bfiles,
+    resma = 'tmp-data/{dataset}/sbayesR/test.block100.imputed.ma',
+    gwas = 'tmp-data/{dataset}/gwas_tmp.ma'
+  output:
+    gwas_imp = 'tmp-data/{dataset}/gwas_imputed.ma'
+  params:
+    inprefix = lambda wildcards, input: os.path.dirname(input.resma[0])
+  shell:
+    """
+    gctb --gwas-summary {params.inprefix}
+    --merge-block-gwas-summary 
+    --out {output}
+    """
+
+rule sbayes_prs:
+  input:
+    gwas = 'tmp-data/{dataset}/gwas_imputed.ma'
+  output:
+    snpres = 'tmp-data/{dataset}/sbayesR/sbayes_res.snpRes',
+    parres = 'tmp-data/{dataset}/sbayesR/sbayes_res.parRes',
+    parsetres = 'tmp-data/{dataset}/sbayesR/sbayes_res.parSetRes'
+  params:
+    prefixo = lambda wildcards, output: output.snpres.replace('.snpRes', ''),
+    indir = 'data/ldm/{dataset}'
+  resources:
+    mem_mb=64000
+  threads: 8
+  shell:
+    """
+    gctb --gwas-summary {params.prefixi} 
+    --ldm-eigen {params.indir}
+    --gwas-summary {input.gwas}
+    --sbayes R
+    --out {params.prefixo}
+    --thread {threads}
+    """
+
+rule gwas_for_sBayesR:
+  input:
+    gwas_rds = 'data/19-Dec-22_MW_eGFR_overall_EA_subtracted_CHRIS5K.rds',
+    map_rds = 'data/geno/{dataset}/qc_geno_all_map.rds'
+  resources:
+    mem_mb=32000
+  threads: 5
+  output:
+    'tmp-data/{dataset}/gwas_tmp.ma',
+    'tmp-data/{dataset}/df_beta_bayes.rds'
+  script:
+    'bin/gwas_to_ma.R'
+
+rule select_samples:
+  input:
+    train_file = 'data/train_pheno_file.rds'
+  output:
+    'data/train_sample_id.txt'
+  resources:
+    mem_mb=12000
+  script:
+    'bin/extract_sample_forsbayes.R'
+
+rule prs_sBayesR:
+  input:
+    # sparse_mat = 'data/ldm/{dataset}/qc_ldm_sparse_chr{chrom}.ldm.sparse.bin',
+    ldm_bin = 'data/ldm/{dataset}/qc_ldm_shrunk_chr{chrom}.ldm.shrunk.bin',
+    ldm_info = 'data/ldm/{dataset}/qc_ldm_shrunk_chr{chrom}.ldm.shrunk.info',
+    gwas_sumstat = 'tmp-data/{dataset}/gwas_tmp.ma'
+  output:
+    directory("results/{dataset}/sbayesR/betas_sbayes_chr{chrom}.mcmcsamples"),
+    "results/{dataset}/sbayesR/betas_sbayes_chr{chrom}.snpRes"
+  params:
+    prefixldm=lambda wildcards, input: input.ldm_bin.replace(".bin", ""),
+    prefixo = lambda wildcards, output: output[0].replace(".mcmcsamples", "")
+  threads: 4
+  resources:
+    mem_mb = 12000
+  shell:
+    """
+    /home/mfilosi/bin/gctb \
+      --ldm {params.prefixldm} \
+      --sbayes R \
+      --pi 0.95,0.02,0.02,0.01 \
+      --gamma 0.0,0.01,0.1,1 \
+      --gwas-summary {input.gwas_sumstat} \
+      --chain-length 10000 \
+      --burn-in 2000 \
+      --out {params.prefixo} \
+      --out-freq 100
+      """
+
+
+rule get_betas:
+  input:
+    snpres = expand("results/{{dataset}}/sbayesR/betas_sbayes_chr{chrom}.snpRes", chrom=range(1, 23)),
+    genotype_rds = 'data/geno/{dataset}/qc_geno_all.rds',
+    map_rds = 'data/geno/{dataset}/qc_geno_all_map_gendist.rds',
+    gwas_rds='data/19-Dec-22_MW_eGFR_overall_EA_subtracted_CHRIS5K.rds'
+  output:
+    out_rds = "results/{dataset}/betas_sbayes_prediction.rds"
+  resources:
+    mem_mb = 12000
+  script:
+    "bin/process_sBayesR_beta.R"
+
+rule combine_betas:
+  input:
+    out_rds = expand("results/{dataset}/betas_sbayes_prediction.rds", dataset="hm3")
