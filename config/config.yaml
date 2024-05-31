@@ -1,0 +1,28 @@
+# Global configuration file
+
+# Directory of the genotype file
+# genotype_path: "/scratch/compgen/data/genetics/CHRIS13K/Imputation/HRC/plinkFormat"
+genotype_json: "config/genotype.json"
+# genotype_json: "config/genotype_wes.json"
+bed_files: "/scratch/compgen/data/genetics/CHRIS13K/Imputation/HRC/plinkFormat/chr"
+
+# Genotype QC parameters:
+maf: 0.01
+hwe: 1e-50
+genorate: 0.1
+mind: 0.1
+
+# GWAS directory:
+gwas_manifest: "config/gwas.json"
+
+# Genetic parameters:
+genetic_distance:
+  type: "OMNI"
+
+
+# LD population
+# for all the possible population see:
+# https://github.com/getian107/PRScs/tree/master
+# - Available dataset: 1KG or UKBB
+ld_population: "eur"
+ld_data: "1KG"

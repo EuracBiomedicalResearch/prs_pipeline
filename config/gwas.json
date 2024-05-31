@@ -1,0 +1,19 @@
+{
+  "eGFR": {
+    "path": "/scratch/mfilosi/CKDgenPRS/data_bk/19-Dec-22_MW_eGFR_overall_EA_subtracted_CHRIS5K.txt.gz",
+    "columns": {
+      "Chr": "chr",
+      "Pos_b37": "pos",
+      "RSID": "id",
+      "Allele2": "a0",
+      "Allele1": "a1",
+      "Freq1": "freq",
+      "Effect": "beta",
+      "StdErr": "beta_se",
+      "P.value": "p",
+      "n_total_sum": "n_eff"
+    },
+    "header": true,
+    "trait_type": "quantitative" 
+  }
+}

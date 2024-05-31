@@ -1,0 +1,9 @@
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - prscs =1.1.0
+  - scipy
+  - h5py

@@ -1,0 +1,8 @@
+{
+  "build": "hg19",
+  "nchrom": 1,
+  "divided_by_chrom": false,
+  "plinkfiles": {
+      "1": "/scratch/compgen/data/genetics/CHRIS13K/Imputation/WES/plinkFormat/CHRIS13K.WES.imputed.rsq03"
+  }
+}

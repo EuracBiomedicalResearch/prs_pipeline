@@ -1,0 +1,14 @@
+# pycharm file
+.idea*
+
+# snakemake
+.snakemake*
+
+# Results and data
+data/*
+results/*
+resources/*
+rsid*
+genetic_data.json
+*.txt
+

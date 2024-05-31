@@ -1,0 +1,33 @@
+from snakemake.utils import min_version
+
+# Min snakemake version
+min_version("8.4.8")
+
+# Config file
+configfile: "config/config.yaml"
+
+
+# Setup singularity
+# container: "docker://continuumio/miniconda3"
+# container: "docker://mambaorg/micromamba"
+
+# Global environment
+conda:
+      "envs/global.yaml"
+
+# Load rules
+include: "rules/common.smk"
+include: "rules/preprocess.smk"
+include: "rules/sct_pipeline.smk"
+# include: "rules/prscs_pipeline.smk"
+# include: "rules/ldpred2_pipeline.smk"
+include: "rules/gwas.smk"
+
+# Target rule
+rule all:
+  input:
+    target_rule_preproc(), 
+    # target_rule_preproc_bychr(),
+    # "data/geno/qc_geno_all_map_gendist.rds",
+    target_rule_gwas(),
+    **target_rule_sct()

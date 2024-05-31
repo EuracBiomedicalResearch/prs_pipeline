@@ -1,4 +1,4 @@
-include: "preprocess_forPRS_debug.snakefile"
+# include: "preprocess.smkg"
 
 rule allldref:
   input:
@@ -160,3 +160,10 @@ rule predict_lassosum2:
     "bin/predict_lassosum2.R"
 
 
+rule get_ld_ref:
+  output:
+    hm3_plus = "resources/ld_ref/map_hm3_plus.rds"
+  shell:
+    """
+    wget https://figshare.com/ndownloader/articles/21305061/versions/2 
+    """

@@ -1,0 +1,29 @@
+{
+  "divided_by_chrom": true,
+  "nchrom": 22,
+  "build": "hg19",
+  "plinkfiles": {
+      "1": "/scratch/compgen/data/genetics/CHRIS13K/Imputation/HRC/plinkFormat/chr1",
+      "2": "/scratch/compgen/data/genetics/CHRIS13K/Imputation/HRC/plinkFormat/chr2",
+      "3": "/scratch/compgen/data/genetics/CHRIS13K/Imputation/HRC/plinkFormat/chr3",
+      "4": "/scratch/compgen/data/genetics/CHRIS13K/Imputation/HRC/plinkFormat/chr4",
+      "5": "/scratch/compgen/data/genetics/CHRIS13K/Imputation/HRC/plinkFormat/chr5",
+      "6": "/scratch/compgen/data/genetics/CHRIS13K/Imputation/HRC/plinkFormat/chr6",
+      "7": "/scratch/compgen/data/genetics/CHRIS13K/Imputation/HRC/plinkFormat/chr7",
+      "8": "/scratch/compgen/data/genetics/CHRIS13K/Imputation/HRC/plinkFormat/chr8",
+      "9": "/scratch/compgen/data/genetics/CHRIS13K/Imputation/HRC/plinkFormat/chr9",
+     "10": "/scratch/compgen/data/genetics/CHRIS13K/Imputation/HRC/plinkFormat/chr10",
+     "11": "/scratch/compgen/data/genetics/CHRIS13K/Imputation/HRC/plinkFormat/chr11",
+     "12": "/scratch/compgen/data/genetics/CHRIS13K/Imputation/HRC/plinkFormat/chr12",
+     "13": "/scratch/compgen/data/genetics/CHRIS13K/Imputation/HRC/plinkFormat/chr13",
+     "14": "/scratch/compgen/data/genetics/CHRIS13K/Imputation/HRC/plinkFormat/chr14",
+     "15": "/scratch/compgen/data/genetics/CHRIS13K/Imputation/HRC/plinkFormat/chr15",
+     "16": "/scratch/compgen/data/genetics/CHRIS13K/Imputation/HRC/plinkFormat/chr16",
+     "17": "/scratch/compgen/data/genetics/CHRIS13K/Imputation/HRC/plinkFormat/chr17",
+     "18": "/scratch/compgen/data/genetics/CHRIS13K/Imputation/HRC/plinkFormat/chr18",
+     "19": "/scratch/compgen/data/genetics/CHRIS13K/Imputation/HRC/plinkFormat/chr19",
+     "20": "/scratch/compgen/data/genetics/CHRIS13K/Imputation/HRC/plinkFormat/chr20",
+     "21": "/scratch/compgen/data/genetics/CHRIS13K/Imputation/HRC/plinkFormat/chr21",
+     "22": "/scratch/compgen/data/genetics/CHRIS13K/Imputation/HRC/plinkFormat/chr22"
+  }
+}
