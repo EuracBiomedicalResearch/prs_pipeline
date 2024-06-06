@@ -12,3 +12,10 @@ rsid*
 genetic_data.json
 *.txt
 
+# Rstudio files
+.Rproj.user
+*.Rproj
+
+# resources and tmp-data
+resource*
+tmp-data*

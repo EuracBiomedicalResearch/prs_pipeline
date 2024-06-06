@@ -5,7 +5,7 @@ library(stringr)
 library(ggplot2)
 library(forcats)
 library(glue)
-library(bigsnpr, lib.loc = "/home/mfilosi/R/rocker-rstudio/4.2")
+library(bigsnpr)
 library(data.table)
 
 #---- Input/Output ----
@@ -16,7 +16,7 @@ cat("Reading file...\n")
 gwas <- readRDS(gwas_rds)
 
 #---- Extract only needed columns ----
-gwas <- gwas[freq > 0.01 & freq < 0.99, c("rsid", "a0", "a1", "beta", "beta_se")]
+gwas <- gwas[freq > 0.01 & freq < 0.99, c("id", "a0", "a1", "beta", "beta_se")]
 names(gwas) <- c("SNP", "A1", "A2", "BETA", "SE")
 
 #---- Write gwas output ----

@@ -117,7 +117,7 @@ rule merge_all_genotypes:
   message:
     "Merge plink files"
   resources:
-    mem_mb=64000
+    mem_mb=72000
   conda:
     "../envs/plink.yaml"
   shell:
@@ -306,15 +306,17 @@ rule get_rsid:
   message:
     "Download rsid database"
   output:
-    rsid_file = f"resources/rsid/rsid-v154-{{params.build}}.index.gz"
+    # rsid_file = "resources/rsid/rsids-v154-{build}.index.gz"
+    rsid_file = rsidfilevar
   params:
-    build = lookup('build', within=genotype_conf),
-    rsfile = f"rsid-v154-{genotype_conf['build']}.tsv.gz"
+    rsfile = lambda wildcards, output: os.path.basename(output.rsid_file).replace("index.gz", "tsv.gz")
+  resources:
+    mem_mb=8000
   shell:
     """
-    wget https://resources.pheweb.org/{params.rsfile} 
+    wget -O resources/{params.rsfile} https://resources.pheweb.org/{params.rsfile} 
     echo -e "CHROM\tPOS\tRSID\tREF\tALT" | bgzip -c > {output.rsid_file}
-    zcat {params.rsfile} | bgzip -c >> {output.rsid_file}
+    zcat resources/{params.rsfile} | bgzip -c >> {output.rsid_file}
     tabix -s1 -b2 -e2 -S1 {output.rsid_file}
     """
 
@@ -337,11 +339,16 @@ rule get_ld_ref_mat:
   message:
     "Download hm3plus correlation matrix"
   output:
-    hm3_mat = "resources/ld_ref/ldref_hm3_plus.zip"
+    hm3_mat = expand("resources/ld_ref/ldref_hm3_plus/LD_with_blocks_chr{chrom}.rds", 
+                     chrom=range(1,23))
+  params:
+    zipfile ="resources/ld_ref/ldref_hm3_plus.zip" 
+  resources:
+    mem_mb=8000
   shell:
     """
-    wget -O {output.hm3_mat} https://drive.usercontent.google.com/download?id=17dyKGA2PZjMsivlYb_AjDmuZjM1RIGvs&export=download&authuser=0&confirm=yes
-    unzip {output.hm3_mat}
+    gdown -O {params.zipfile} https://drive.google.com/uc?id=17dyKGA2PZjMsivlYb_AjDmuZjM1RIGvs
+    unzip {output.hm3_mat} -d resources/ld_ref/ldref_hm3_plus
     """
 
 

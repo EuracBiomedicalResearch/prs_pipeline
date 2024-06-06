@@ -7,7 +7,7 @@ genotype_json: "config/genotype.json"
 bed_files: "/scratch/compgen/data/genetics/CHRIS13K/Imputation/HRC/plinkFormat/chr"
 
 # Genotype QC parameters:
-maf: 0.01
+maf: 0.05
 hwe: 1e-50
 genorate: 0.1
 mind: 0.1

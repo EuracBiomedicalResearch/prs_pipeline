@@ -56,27 +56,39 @@ def target_rule_preproc_bychr():
 
 # SCT PRS
 def target_rule_sct():
-  return {"clump": expand('results/{pheno}/clump_res_ct.rds', pheno=gwas_traits),
-   "multi_rds": expand('results/{pheno}/multi_prs_ct.rds', pheno=gwas_traits),
-   "multi_bk": expand('results/{pheno}/multi_prs_ct.bk', pheno=gwas_traits)}
+  return {"clump": expand('results/{pheno}/sct/clump_res_ct.rds', pheno=gwas_traits),
+   "multi_rds": expand('results/{pheno}/sct/multi_prs_ct.rds', pheno=gwas_traits),
+   "multi_bk": expand('results/{pheno}/sct/multi_prs_ct.bk', pheno=gwas_traits)}
  
-
 # GWAS
 def target_rule_gwas():
   return expand("results/{pheno}/gwas.rds", pheno=gwas_traits)
 
 
-def get_ldblk_url():
+# PRS-CS
+def target_rule_prscs():
+  # return expand("results/{pheno}/gwas_prscs.csv", pheno=gwas_traits)
+  # return expand("results/{pheno}/prscs/beta_all.txt", pheno=gwas_traits)
+
+  return {"pred_prscs": expand("results/{pheno}/prscs/pred_prscs.rds", pheno=gwas_traits),
+          "map_prscs": expand("results/{pheno}/prscs/map_prscs.rds", pheno=gwas_traits)}
+
+# LDPred2
+def target_rule_ldpred2():
+  return {"pred_ldpred2": expand("results/{pheno}/ldpred2/pred_ldpred2.rds", pheno=gwas_traits)}
+
+
+
+def get_ldblk_url(wildcards):
   
   # TODO: check for available population 
   # TODO: check for available dataset
 
   filename = "ldblk_{data}_{population}.tar.gz"
-  filename.format(**{
-      "data": config["ld_data"].upper(),
+  filename = filename.format(**{
+      "data": config["ld_data"].lower(),
       "population": config["ld_population"].lower()
     })
-
 
   baseurl = "https://personal.broadinstitute.org/hhuang/public/PRS-CSx/Reference/"
   baseurl += config["ld_data"].upper()
@@ -84,5 +96,33 @@ def get_ldblk_url():
 
   return baseurl
 
-# def get_ldblk_dir():
-#   mydir = "resources/ld{}"
+
+def get_ldblk_zip():
+  lddata = config["ld_data"].lower()
+  ldpop = config["ld_population"].lower()
+  nchroms = genotype_conf["nchrom"]
+  
+  mydir = "resources/ldblk_{data}_{population}.tar.gz"
+  return mydir.format(**{"data":lddata, "population": ldpop})
+
+
+def get_ldblk_files():
+  lddata = config["ld_data"].lower()
+  ldpop = config["ld_population"].lower()
+  nchroms = genotype_conf["nchrom"]
+  
+  mydir = "resources/ldblk_{data}_{population}/ldblk_{data}_chr{chrom}.hdf5"
+  return expand(mydir, data=[lddata], population=[ldpop], 
+                chrom=range(1, nchroms + 1))   
+
+def get_ldblk_dir():
+  lddata = config["ld_data"].lower()
+  ldpop = config["ld_population"].lower()
+  nchroms = genotype_conf["nchrom"]
+  
+  mydir = "resources/ldblk_{data}_{population}"
+  return mydir.format(**{"data": lddata, "population": ldpop})
+
+
+rsidfilevar = f"resources/rsid/rsids-v154-{genotype_conf['build']}.index.gz" 
+
