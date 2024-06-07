@@ -56,9 +56,9 @@ columns specification as a python dictionary mapping.
 
 ## Available algorithms:
 
-- PRScs, see [https://github.com/getian107/PRScs](https://github.com/getian107/PRScs)
-- LDPred2 (through `R` implementation in [`bigsnpr` package](https://privefl.github.io/bigsnpr))
-- lassosum (implemented in [`bigsnpr` package](https://privefl.github.io/bigsnpr))
-- CT method (implemented in [`bigsnpr` package](https://privefl.github.io/bigsnpr))
-- sBayesR (implemented in [gctb](https://cnsgenomics.com/software/gctb/#Overview)) - under
-    development - under development
+- **PRScs**, see [https://github.com/getian107/PRScs](https://github.com/getian107/PRScs)
+- **LDPred2** (through `R` implementation in [`bigsnpr` package](https://privefl.github.io/bigsnpr))
+- **lassosum** (implemented in [`bigsnpr` package](https://privefl.github.io/bigsnpr))
+- **CT method** (implemented in [`bigsnpr` package](https://privefl.github.io/bigsnpr))
+- **sBayesR** (implemented in [gctb](https://cnsgenomics.com/software/gctb/#Overview)) - under
+    development
