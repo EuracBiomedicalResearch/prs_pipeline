@@ -1,0 +1,90 @@
+$schema: "http://json-schema.org/draft-06/schema#"
+
+description: Snakemake configuration file for running prs pipeline
+
+type: object
+
+properties:
+  output_dir:
+    type: string
+    description: Output directory where all the results are stored
+    default: results
+  data_dir:
+    type: string
+    description: Directory where to put genotype data after QC
+    default: "data"
+  genotype_json:
+    type: string
+    description: configuration file containing genotype information
+  maf:
+    type: number
+    description: Minor allele frequency cutoff
+    default: 0.05
+  hwe:
+    type: string
+    description: Hardy-Weinburg disequilibrium p-value test (see plink)
+  genorate:
+    type: number
+    description: Minimum genotyping rate accepted
+    default: 0.1
+  mind:
+    type: number
+    description: Minimum individual missingness rate
+    default: 0.1
+  gwas_manifest:
+    type: string
+    description: Definition of the GWAS summary statistic to use for PRS
+  ld_reference:
+    type: object
+    description: LD reference to use for the analysis
+    properties:
+      population: 
+        type: string
+        description: "LD reference population. For possible choices see(https://github.com/getian107/PRScs)"
+        default: eur
+      data:
+        type: string
+        description: "Data used for estimating LD, can be either 1KG or UKBB"
+        default: 1KG
+    required:
+      - population
+      - data
+  
+  cache_dir:
+    type: string
+    description: directory where some of the available resources have been already downloaded from a previous analysis
+    prs_algorithms:
+      type: object
+      description: If an algorithm is present here it will be used for the analysis
+      properties:
+        ldpred2:
+          type: object
+          properties:
+            activate:
+              type: boolean
+              default: true
+        lassosum2:
+          type: object
+          properties:
+            activate:
+              type: boolean
+              default: true
+        prscs:
+          type: object
+          properties:
+            activate:
+              type: boolean
+              default: true
+        sct:
+          type: object
+          properties:
+            activate:
+              type: boolean
+              default: true
+
+required:
+  - output_dir
+  - genotype_json
+  - gwas_manifest
+  - prs_algorithms
+  

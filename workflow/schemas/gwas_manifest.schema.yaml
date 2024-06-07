@@ -1,0 +1,92 @@
+$schema: "http://json-schema.org/draft-06/schema#"
+
+description: Schema to validate GWAS input
+type: object
+
+properties:
+  path:
+    type: string
+    description: Path of the GWAS summary statistic
+
+  header:
+    type: boolean
+    description: Is the file have the names of the column in the first row?
+    defalt: true
+
+  columns:
+    type: object
+    description: Definition of the columns mapping
+    chr:
+      type: 
+        - string
+        - integer
+      description: Original GWAS column for Chromosome
+
+    pos:
+      type: 
+        - string
+        - integer
+      description: Original GWAS column for genomic position
+
+    id:
+      type: 
+        - string
+        - integer
+      description: Original GWAS column for variant ID
+
+    a0:
+      type: 
+        - string
+        - integer
+      description: Original GWAS column for Non effective allele
+
+    a1:
+      type: 
+        - string
+        - integer
+      description: Original GWAS column for Effective Allele
+
+    freq:
+      type: 
+        - string
+        - integer
+      description: Original GWAS column for variant effective allele frequence
+
+    beta:
+      type: 
+        - string
+        - integer
+      description: Original GWAS column for effect of the variant on the phenotype
+
+    beta_se:
+      type: 
+        - string
+        - integer
+      description: Original GWAS column for standard error for the effect size
+
+    p:
+      type: 
+        - string
+        - integer
+      description: Original GWAS column for p-value of the association
+
+    n_eff:
+      type: 
+        - string
+        - integer
+      description: Original GWAS column for number of samples used in the GWAS
+
+    required:
+      - chr
+      - pos
+      - id
+      - a0
+      - a1
+      - beta
+      - beta_se
+      - p
+
+  
+
+  required:
+    - path

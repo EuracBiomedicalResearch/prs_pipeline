@@ -1,0 +1,26 @@
+$schema: "http://json-schema.org/draft-06/schema#"
+
+type: object
+description: Description of the location of the genotype files
+
+properties:
+  divided_by_chrom:
+    type: boolean
+    default: true
+
+  nchrom:
+    type: integer
+    default: 22
+
+  build:
+    type: string
+    description: Genotype build, possible values are (hg19 or hg38)
+    default: hg19
+
+  plinkfiles:
+    type: object
+
+  required:
+    - build
+    - nchrom
+    - plinkfiles
