@@ -59,22 +59,22 @@
 rule prs_LDpred2:
   input:
     # train_data = 'data/train_pheno_file.rds',
-    map_rds = "data/geno/qc_geno_all_map.rds",
-    gwas_rds="results/{pheno}/gwas.rds",
-    genotype_rds = "data/geno/qc_geno_all.rds",
+    map_rds = os.path.join(geno_dir, "qc_geno_all_map.rds"),
+    gwas_rds = os.path.join(odir, "gwas.rds"),
+    genotype_rds = os.path.join(geno_dir, "qc_geno_all.rds"),
     map_ld_rds = ancient(hm3map),
     corfiles = ancient(hm3corr)
     # map_ld_rds = "resources/ld_ref/map_hm3_plus.rds",
     # corfiles = expand("resources/ld_ref/ldref_hm3_plus/LD_with_blocks_chr{chrom}.rds", 
     #                  chrom=range(1,23))
   output:
-    "results/{pheno}/ldpred2/heritability_ldpred2.rds",
-    "results/{pheno}/ldpred2/final_mod_ldpred2.rds",
-    "results/{pheno}/ldpred2/beta_auto_ldpred2.rds",
-    "results/{pheno}/ldpred2/df_beta_good_with_ld.rds",
-    "results/{pheno}/ldpred2/beta_grid_ldpred2.rds",
-    "results/{pheno}/ldpred2/pred_grid_ldpred2.rds",
-    "results/{pheno}/ldpred2/params_grid_ldpred2.rds"
+    os.path.join(odir, "ldpred2/heritability_ldpred2.rds"),
+    os.path.join(odir, "ldpred2/final_mod_ldpred2.rds"),
+    os.path.join(odir, "ldpred2/beta_auto_ldpred2.rds"),
+    os.path.join(odir, "ldpred2/df_beta_good_with_ld.rds"),
+    os.path.join(odir, "ldpred2/beta_grid_ldpred2.rds"),
+    os.path.join(odir, "ldpred2/pred_grid_ldpred2.rds"),
+    os.path.join(odir, "ldpred2/params_grid_ldpred2.rds"),
   resources:
     mem_mb = 24000,
     tmpdir = "tmp-data"
@@ -88,15 +88,15 @@ rule predict_LDpred2:
   input:
     # train_data = 'data/train_pheno_file.rds',
     # map_rds = 'data/geno/rds/qc_geno_all_map.rds',
-    map_rds = "data/geno/qc_geno_all_map.rds",
-    gwas_rds="results/{pheno}/gwas.rds",
-    map_good = "results/{pheno}/ldpred2/df_beta_good_with_ld.rds",
-    genotype_rds = "data/geno/qc_geno_all.rds",
-    beta_auto = "results/{pheno}/ldpred2/beta_auto_ldpred2.rds"
+    map_rds = os.path.join(geno_dir, "qc_geno_all_map.rds"),
+    gwas_rds = os.path.join(odir, "gwas.rds"),
+    map_good = os.path.join(odir, "ldpred2/df_beta_good_with_ld.rds"),
+    genotype_rds = os.path.join(geno_dir, "qc_geno_all.rds"),
+    beta_auto = os.path.join(odir, "ldpred2/beta_auto_ldpred2.rds")
   output:
-    pred_rds = "results/{pheno}/ldpred2/prs.rds",
-    pred_csv = "results/{pheno}/ldpred2/prs.csv",
-    map_file = "results/{pheno}/ldpred2/map_prs.rds"
+    pred_rds = os.path.join(odir, "ldpred2/prs.rds"),
+    pred_csv = os.path.join(odir, "ldpred2/prs.csv"),
+    map_file = os.path.join(odir, "ldpred2/map_prs.rds")
   threads: 16
   resources:
     mem_mb = 32000
@@ -110,18 +110,18 @@ rule prs_lassosum2:
   message:
     "Run PRS estimation with lassosum2"
   input:
-    map_rds = "data/geno/qc_geno_all_map.rds",
-    gwas_rds="results/{pheno}/gwas.rds",
-    genotype_rds = "data/geno/qc_geno_all.rds",
+    map_rds = os.path.join(geno_dir, "qc_geno_all_map.rds"),
+    gwas_rds = os.path.join(odir, "gwas.rds"),
+    genotype_rds = os.path.join(geno_dir, "qc_geno_all.rds"),
     map_ld_rds = ancient(hm3map),
     corfiles = ancient(hm3corr)
     # map_ld_rds = "resources/ld_ref/map_hm3_plus.rds", 
     # corfiles = expand("resources/ld_ref/ldref_hm3_plus/LD_with_blocks_chr{chrom}.rds", 
                      # chrom=range(1,23))
   output:
-    "results/{pheno}/lassosum2/beta_lassosum2.rds",
-    "results/{pheno}/lassosum2/df_beta_good_lassosum.rds",
-    "results/{pheno}/lassosum2/params_grid_lassosum.rds"
+    os.path.join(odir, "lassosum2/beta_lassosum2.rds"),
+    os.path.join(odir, "lassosum2/df_beta_good_lassosum.rds"),
+    os.path.join(odir, "lassosum2/params_grid_lassosum.rds")
   threads: 8
   resources:
     mem_mb = 64000,
@@ -136,14 +136,14 @@ rule predict_lassosum2:
   message:
     "Predict PRS with lassosum2"
   input:
-    genotype_rds = "data/geno/qc_geno_all.rds",
-    df_beta = "results/{pheno}/lassosum2/df_beta_good_lassosum.rds",
-    beta_lassosum = "results/{pheno}/lassosum2/beta_lassosum2.rds",
+    genotype_rds = os.path.join(geno_dir, "qc_geno_all.rds"),
+    df_beta = os.path.join(odir, "lassosum2/df_beta_good_lassosum.rds"),
+    beta_lassosum = os.path.join(odir, "lassosum2/beta_lassosum2.rds"),
   output:
     # pred = "results/{pheno}/lassosum2/pred_lassosum2.rds"
-    pred_rds = "results/{pheno}/lassosum2/prs.rds",
-    pred_csv = "results/{pheno}/lassosum2/prs.csv",
-    map_file = "results/{pheno}/lassosum2/map_prs.rds"
+    pred_rds = os.path.join(odir, "lassosum2/prs.rds"),
+    pred_csv = os.path.join(odir, "lassosum2/prs.csv"),
+    map_file = os.path.join(odir, "lassosum2/map_prs.rds")
   resources:
     mem_mb=14000
   conda:

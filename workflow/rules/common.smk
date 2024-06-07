@@ -1,27 +1,49 @@
 import json
 import os
 import itertools as it
+from snakemake.utils import validate
 
+# Validate the config file
+validate(config, schema="../schemas/config.schema.yaml")
+
+# Genotype configuation
 genotype_conf = json.load(open(config["genotype_json"], "r"))
-jsonfile = config["gwas_manifest"]
-gwases = json.load(open(jsonfile, "r"))
-gwas_traits = gwases.keys()
+validate(genotype_conf, schema="../schemas/genotype_json.schema.yaml")
+
+# Set the results directory
+odir = os.path.join(config["output_dir"], "{pheno}")
+data_dir = config["data_dir"]
+geno_dir = os.path.join(data_dir, "geno")
 
 # Create resource directory and check existence
 resource_dir = config["cache_dir"]
 if not os.path.isdir(resource_dir):
   resource_dir = "resources"
 
+# Genotype configuation
+genotype_conf = json.load(open(config["genotype_json"], "r"))
+
+# GWAS configuration
+jsonfile = config["gwas_manifest"]
+gwases = json.load(open(jsonfile, "r"))
+gwas_traits = gwases.keys()
+
+# Validate GWAS
+for k, v in gwases.items():
+  validate(v, schema="../schemas/gwas_manifest.schema.yaml")
+
 # Create path for rsid file
 rsidfilevar = os.path.join(resource_dir, "rsid", 
                            f"rsids-v154-{genotype_conf['build']}.index.gz")
-# rsidfilevar = f"{resource_dir}/rsid/rsids-v154-{genotype_conf['build']}.index.gz" 
-
-
 hm3corr = expand(os.path.join(resource_dir, "ld_ref", "ldref_hm3_plus", 
                                     "LD_with_blocks_chr{chrom}.rds"), 
                      chrom=range(1,23))
 hm3map = os.path.join(resource_dir, "ld_ref", "map_hm3_plus.rds")
+
+# Get LD reference configuration
+ldref = config["ld_reference"]
+lddata = ldref["data"].lower()
+ldpop = ldref["population"].lower()
 
 
 def add_plink_ext(infile):
@@ -41,13 +63,13 @@ def get_reference(wildcards):
 def get_all_ref(wildcards):
   flist = []
   for i, e in it.product(range(genotype_conf["nchrom"]), 
-                         ['.bed', '.bim', '.fam']):
+                         [".bed", ".bim", ".fam"]):
     chrom = i + 1
-    flist.append('data/geno/qc_geno_chr{chrom}{e}')
+    flist.append(os.path.join(geno_dir, "qc_geno_chr{chrom}{e}"))
 
   nchrom = genotype_conf["nchrom"]
-  flist = expand('data/geno/qc_geno_chr{chrom}{ext}', chrom=range(1, nchrom + 1), 
-                ext=['.bed', '.bim', '.fam'])
+  flist = expand(os.path.join(geno_dir, "qc_geno_chr{chrom}{ext}"), chrom=range(1, nchrom + 1), 
+                ext=[".bed", ".bim", ".fam"])
   return flist
 
 
@@ -58,27 +80,27 @@ def get_ldblk_url(wildcards):
 
   filename = "ldblk_{data}_{population}.tar.gz"
   filename = filename.format(**{
-      "data": config["ld_data"].lower(),
-      "population": config["ld_population"].lower()
+      "data": lddata,
+      "population": ldpop
     })
 
   baseurl = "https://personal.broadinstitute.org/hhuang/public/PRS-CSx/Reference/"
-  baseurl += config["ld_data"].upper()
+  baseurl += lddata.upper()
   baseurl += f"/{filename}"
 
   return baseurl
 
 def get_ldblk_zip():
-  lddata = config["ld_data"].lower()
-  ldpop = config["ld_population"].lower()
+  # lddata = config["ld_data"].lower()
+  # ldpop = config["ld_population"].lower()
   nchroms = genotype_conf["nchrom"]
   
   mydir = os.path.join(resource_dir, "ldblk_{data}_{population}.tar.gz")
   return mydir.format(**{"data":lddata, "population": ldpop})
 
 def get_ldblk_files():
-  lddata = config["ld_data"].lower()
-  ldpop = config["ld_population"].lower()
+  # lddata = config["ld_data"].lower()
+  # ldpop = config["ld_population"].lower()
   nchroms = genotype_conf["nchrom"]
   
   mydir = os.path.join(resource_dir, "ldblk_{data}_{population}", "ldblk_{data}_chr{chrom}.hdf5")
@@ -86,19 +108,24 @@ def get_ldblk_files():
                 chrom=range(1, nchroms + 1))   
 
 def get_ldblk_dir():
-  lddata = config["ld_data"].lower()
-  ldpop = config["ld_population"].lower()
+  # lddata = config["ld_data"].lower()
+  # ldpop = config["ld_population"].lower()
   
   mydir = os.path.join(resource_dir, "ldblk_{data}_{population}")
   return mydir.format(**{"data": lddata, "population": ldpop})
 
+def prscs_beta_collect(wildcards):
+  return expand(os.path.join(
+    config["output_dir"], "{{pheno}}", 
+    "prscs/_pst_eff_a1_b0.5_phiauto_chr{chrom}.txt"), 
+    chrom=range(1,genotype_conf["nchrom"] + 1))
 
 # Preprocessing
 def target_rule_preproc():
   """Define target rule for preprocessing
   """
-  genofiles = ['data/geno/qc_geno_all.rds', 'data/geno/qc_geno_all.bk',
-    'data/geno/qc_geno_all_map.rds']
+  genofiles = [f"{geno_dir}/qc_geno_all.rds", f"{geno_dir}/qc_geno_all.bk",
+    f"{geno_dir}/qc_geno_all_map.rds"]
   return genofiles
 
 
@@ -107,33 +134,32 @@ def expand_chrom(myfile):
 
 
 def target_rule_preproc_bychr():
-  genofiles = expand_chrom("data/geno/qc_geno_chr{chrom}.rds")
-  genofiles.append(expand_chrom("data/geno/qc_geno_chr{chrom}.bk"))
-  genofiles.append(expand_chrom("data/geno/qc_geno_chr{chrom}_map.rds"))
-  genofiles.append(expand_chrom("data/geno/qc_geno_chr{chrom}_map_gendist.rds"))
+  genofiles = expand_chrom(os.path.join(geno_dir, "qc_geno_chr{chrom}.rds"))
+  genofiles.append(expand_chrom(os.path.join(geno_dir, "qc_geno_chr{chrom}.bk")))
+  genofiles.append(expand_chrom(os.path.join(geno_dir, "qc_geno_chr{chrom}_map.rds")))
+  genofiles.append(expand_chrom(os.path.join(geno_dir, "qc_geno_chr{chrom}_map_gendist.rds")))
 
   return genofiles
 
 
 # SCT PRS
 def target_rule_sct():
-  return {"clump": expand('results/{pheno}/sct/clump_res_ct.rds', pheno=gwas_traits),
-   "multi_rds": expand('results/{pheno}/sct/multi_prs_ct.rds', pheno=gwas_traits),
-   "multi_bk": expand('results/{pheno}/sct/multi_prs_ct.bk', pheno=gwas_traits)}
+  return {"clump": expand(os.path.join(odir, "sct/clump_res_ct.rds"), pheno=gwas_traits),
+   "multi_rds": expand(os.path.join(odir, "sct/multi_prs_ct.rds"), pheno=gwas_traits),
+   "multi_bk": expand(os.path.join(odir, "sct/multi_prs_ct.bk"), pheno=gwas_traits)}
  
 # GWAS
 def target_rule_gwas():
-  return expand("results/{pheno}/gwas.rds", pheno=gwas_traits)
+  return expand(os.path.join(odir, "gwas.rds"), pheno=gwas_traits)
 
 # Define target rule for computing the PRSs
 def target_rule_prs():
-  out_path = os.path.join("results", "{pheno}")
   output_files = []
   for k, v in config["prs_algorithms"].items():
     try:
       # print(v["activate"])
       if v["activate"]:
-        alg_path = os.path.join(out_path, k.lower())
+        alg_path = os.path.join(odir, k.lower())
         preds = expand(os.path.join(alg_path, "prs{ext}"),
                       pheno=gwas_traits, ext=[".rds", ".csv"])
         output_files.extend(preds)
@@ -145,18 +171,16 @@ def target_rule_prs():
       pass
   return output_files
 
-# PRS-CS
-def target_rule_prscs():
-  # return expand("results/{pheno}/gwas_prscs.csv", pheno=gwas_traits)
-  # return expand("results/{pheno}/prscs/beta_all.txt", pheno=gwas_traits)
+# # PRS-CS
+# def target_rule_prscs():
 
-  return {"pred_prscs": expand("results/{pheno}/prscs/prs{ext}", 
-                               pheno=gwas_traits, ext=[".rds", ".csv"]),
-          "map_prscs": expand("results/{pheno}/prscs/map_prs.rds", pheno=gwas_traits)}
+#   return {"pred_prscs": expand("results/{pheno}/prscs/prs{ext}", 
+#                                pheno=gwas_traits, ext=[".rds", ".csv"]),
+#           "map_prscs": expand("results/{pheno}/prscs/map_prs.rds", pheno=gwas_traits)}
 
-# LDPred2
-def target_rule_ldpred2():
-  return {"pred_ldpred2": expand("results/{pheno}/ldpred2/prs{ext}", pheno=gwas_traits,
-                                ext=[".rds", ".csv"])}
+# # LDPred2
+# def target_rule_ldpred2():
+#   return {"pred_ldpred2": expand("results/{pheno}/ldpred2/prs{ext}", pheno=gwas_traits,
+#                                 ext=[".rds", ".csv"])}
 
 

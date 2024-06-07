@@ -1,34 +1,7 @@
 import glob
 
 wildcard_constraints:
-  chrom="\d+"
-
-# rule allld:
-#   input:
-#     expand('data/ld_ref/hm3/ld_chr{chrom}.rds', chrom=range(1,23)),
-
-# rule alltmp:
-#   input:
-#     expand('data/geno/{dd}/qc_geno_all.rds', dd=['chris', 'hm3']),
-#     expand('data/geno/{dd}/qc_geno_all.bk', dd=['chris', 'hm3']),
-#     expand('data/geno/{dd}/qc_geno_all_map.rds', dd=['chris', 'hm3']),
-#     expand('data/ld_ref/{dataset}/ld_chr{chrom}.rds', dataset=['chris', 'hm3'], chrom=range(1,23)),
-#     expand('data/{dataset}/bad_variants.png', dataset=['chris', 'hm3']),
-#     expand('data/{dataset}/beta_distribution.png', dataset=['chris', 'hm3'])
-
-# rule alltmp:
-#   input:
-#     expand('data/geno/qc_geno_all.rds')
-#     expand('data/geno/qc_geno_all.bk'),
-#     expand('data/geno/qc_geno_all_map.rds'),
-#     expand('data/ld_ref/ld_chr{chrom}.rds', chrom=range(1,23)),
-#     expand('data/bad_variants.png'),
-#     expand('data/beta_distribution.png')
-    
-# Uncomment the following lines and add to the shell script below if you want to use bcftools
-# bcftools is very slow compare to bash scripting as did here.
-# FMT_STRING = r"""%CHROM\t%POS\t%REF\t%ALT{0}\t%INFO/R2\t%INFO/MAF\n"""
-# bcftools query -f {FMT_STRING:q} -H -o {output} {input}
+  chrom=r"\d+"
 
 # rule extract_maf_r2:
 #   input:
@@ -58,7 +31,6 @@ rule create_snplist:
     'scripts/create_snplist.py'
 
 # TODO: Add split in chromosomes if only 1 plink file is passed
-
 rule genotype_QC:
   input: 
     unpack(get_reference),
@@ -92,9 +64,6 @@ rule genotype_QC:
 rule write_genotype_mergelist:
   message: "Create plink merge list"
   input:
-      # expand('data/geno/qc_geno_chr{cc}{ext}', 
-      #        cc=range(1, genotype_conf["nchrom"] + 1), 
-      #        ext=['.bed', '.bim', '.fam'])
       get_all_ref
   output:
       'merge_list_all.txt'
@@ -144,37 +113,6 @@ rule import_genotype_into_r:
   script:
     '../scripts/load_genotype_all.R'
 
-# rule merge_hm3_plus:
-#   input:
-#     bim = 'data/geno/qc_geno_chr{chrom}.bim',
-#     map_hm3_plus = "data/map_hm3_plus.rds"
-#   output:
-#     snplist_file = 'data/geno/hm3_chris_snplist_chr{chrom}.txt'
-#   resources:
-#     mem_mb = 24000
-#   threads: 1
-#   script:
-#     'bin/merge_with_hm3_plus.R'
-
-# rule select_snps:
-#   input:
-#     bed = 'data/geno/chris/qc_geno_chr{chrom}.bed',
-#     bim = 'data/geno/chris/qc_geno_chr{chrom}.bim',
-#     fam = 'data/geno/chris/qc_geno_chr{chrom}.fam',
-#     snplist_file = 'data/geno/hm3_chris_snplist_chr{chrom}.txt'
-#   output:
-#     bed = 'data/geno/hm3/qc_geno_chr{chrom}.bed',
-#     bim = 'data/geno/hm3/qc_geno_chr{chrom}.bim',
-#     fam = 'data/geno/hm3/qc_geno_chr{chrom}.fam'
-#   params:
-#     prefixi=lambda wildcars, input: input.bed.replace(".bed", ""),
-#     prefixo=lambda wildcars, output: output.bed.replace(".bed", "")
-#   resources:
-#     mem_mb = 12000
-#   shell:
-#     'plink --bfile {params.prefixi} --memory {resources.mem_mb} --extract {input.snplist_file} --make-bed --out {params.prefixo}'
-
-
 rule compute_distance:
   input:
     mapfile = "data/geno/qc_geno_all_map.rds"
@@ -189,17 +127,6 @@ rule compute_distance:
   script:
     "../scripts/compute_genetic_dist.R"
 
-rule create_pheno_for_chris:
-  input:
-    phenofile = "data/PRS_eGFR_adj_corrsep.txt",
-    fam = 'data/geno/qc_geno_chrall.fam'
-    # fam=os.path.join(genopath, 'plinkFormat', 'chr1.fam')
-  output:
-    'train_sample_for_geno.txt',
-    'data/train_pheno_file.rds',
-    'data/test_pheno_file.rds',
-  script:
-    'bin/load_pheno_and_sample_list.R'
 
 # rule corr_LD_bychr:
 #     input:
@@ -282,10 +209,6 @@ rule create_ldref:
 #     script:
 
 
-rule plot_ld_all:
-  input:
-    expand('data/ld_ref/{dataset}/condz_in_chr{chrom}.png', dataset="hm3", chrom=range(1,23))
-
 rule check_ld_ref:
   input:
     genotype_rds = 'data/geno/{dataset}/qc_geno_all.rds',
@@ -306,7 +229,6 @@ rule get_rsid:
   message:
     "Download rsid database"
   output:
-    # rsid_file = "resources/rsid/rsids-v154-{build}.index.gz"
     rsid_file = rsidfilevar
   params:
     rsfile = lambda wildcards, output: os.path.basename(output.rsid_file).replace("index.gz", "tsv.gz")
@@ -323,7 +245,6 @@ rule get_rsid:
 rule get_ld_ref:
   output:
     hm3plus=hm3map
-    # hm3_plus = os.path.join(resource_dir,"ld_ref", "map_hm3_plus.rds"),
   shell:
     """
     wget -O {output.hm3} https://figshare.com/ndownloader/files/37802721
@@ -334,8 +255,6 @@ rule get_ld_ref_mat:
     "Download hm3plus correlation matrix"
   output:
     hm3_mat = hm3corr
-    # hm3_mat = expand("resources/ld_ref/ldref_hm3_plus/LD_with_blocks_chr{chrom}.rds", 
-    #                  chrom=range(1,23))
   params:
     zipfile ="resources/ld_ref/ldref_hm3_plus.zip" 
   resources:
@@ -345,5 +264,4 @@ rule get_ld_ref_mat:
     gdown -O {params.zipfile} https://drive.google.com/uc?id=17dyKGA2PZjMsivlYb_AjDmuZjM1RIGvs
     unzip {output.hm3_mat} -d resources/ld_ref/ldref_hm3_plus
     """
-
 

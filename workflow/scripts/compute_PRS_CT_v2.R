@@ -193,12 +193,12 @@ for (i in seq(1, nparams)){
   pred_mat[, i] <- rowSums(multi_PRS[, ind.col])
 }
 pred_mat <- as.data.frame(pred_mat)
-pred_mat <- cbind(familyID=geno$fam$family.ID, sampleID=geno$fam$sample.ID, pred_mat)
-saveRDS(pred_mat, file=)
-
-
-
+pred_mat <- cbind(familyID=geno_data$fam$family.ID, sampleID=geno_data$fam$sample.ID, pred_mat)
+saveRDS(pred_mat, file=pred_rds)
+write.table(pred_mat, file=pred_csv, sep="\t", row.names = FALSE, col.names = TRUE, quote=FALSE)
 t1 <- Sys.time()
+
+
 #---- Compute PRS using model ----
 # final_mod_file <- snakemake@output[["final_mod"]]
 # if (file.exists(final_mod_file) & force == FALSE ){

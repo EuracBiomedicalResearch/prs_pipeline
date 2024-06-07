@@ -1,4 +1,6 @@
 # Global configuration file
+output_dir: "results"
+data_dir: "data"
 
 # Directory of the genotype file
 # genotype_path: "/scratch/compgen/data/genetics/CHRIS13K/Imputation/HRC/plinkFormat"
@@ -14,15 +16,16 @@ mind: 0.1
 gwas_manifest: "config/gwas.json"
 
 # Genetic parameters:
-genetic_distance:
-  type: "OMNI"
+# genetic_distance:
+#   dataset: "OMNI"
 
 # LD population
 # for all the possible population see:
 # https://github.com/getian107/PRScs/tree/master
 # - Available dataset: 1KG or UKBB
-ld_population: "eur"
-ld_data: "1KG"
+ld_reference:
+  population: "eur"
+  data: "1KG"
 
 # Cache directory for resources:
 cache_dir: "/storage03/mfilosi/CKDgenPRS/prs_pipeline/resources"
@@ -30,7 +33,7 @@ cache_dir: "/storage03/mfilosi/CKDgenPRS/prs_pipeline/resources"
 # PRS-method activation
 prs_algorithms:
   ldpred2:
-    activate: true
+    activate: false
   lassosum2:
     activate: true
   prscs:

@@ -5,9 +5,9 @@
 
 rule gwas_for_prscs:
   input:
-    gwas_rds = "results/{pheno}/gwas.rds"
+    gwas_rds = os.path.join(odir, "gwas.rds")
   output:
-    gwas_prscs = "results/{pheno}/gwas_prscs.csv"
+    gwas_prscs = os.path.join(odir, "gwas_prscs.csv")
   resources:
     mem_mb=16000
   conda:
@@ -17,10 +17,10 @@ rule gwas_for_prscs:
 
 rule annotate_bim:
   input:
-    bim =  "data/geno/qc_geno_chr{chrom}.bim",
+    bim =  os.path.join(geno_dir, "qc_geno_chr{chrom}.bim"),
     rsidfile = ancient(rsidfilevar)
   output:
-    bim_anno = "data/geno/qc_geno_chr{chrom}_rsid.bim",
+    bim_anno = os.path.join(geno_dir, "qc_geno_chr{chrom}_rsid.bim"),
   resources:
     mem_mb = 8000
   shell:
@@ -30,12 +30,11 @@ rule annotate_bim:
 
 rule run_prscs:
   input:
-    gwas_prscs = "results/{pheno}/gwas_prscs.csv",
-    bim =  "data/geno/qc_geno_chr{chrom}_rsid.bim",
+    gwas_prscs = os.path.join(odir, "gwas_prscs.csv"),
+    bim =  os.path.join(geno_dir, "qc_geno_chr{chrom}_rsid.bim"),
     ldref = ancient(get_ldblk_files())
-    # ldref = os.path.join(ldpath, "ldblk_ukbb_eur/ldblk_ukbb_chr22.hdf5")
   output:
-    beta_prscs = "results/{pheno}/prscs/_pst_eff_a1_b0.5_phiauto_chr{chrom}.txt"
+    beta_prscs = os.path.join(odir, "prscs/_pst_eff_a1_b0.5_phiauto_chr{chrom}.txt")
   params:
     tmpdir = "tmp-data",
     # prefixld = lambda wildcards, input: os.path.dirname(input.ldref),
@@ -60,10 +59,11 @@ rule run_prscs:
 
 rule move_and_collect:
   input:
-    beta_prscs = expand("results/{{pheno}}/prscs/_pst_eff_a1_b0.5_phiauto_chr{chrom}.txt",
-                        chrom=range(1,genotype_conf["nchrom"] + 1))
+    beta_prscs = prscs_beta_collect 
+    # beta_prscs = expand("results/{{pheno}}/prscs/_pst_eff_a1_b0.5_phiauto_chr{chrom}.txt",
+    #                     chrom=range(1,genotype_conf["nchrom"] + 1))
   output:
-    beta_shrinked = "results/{pheno}/prscs/beta_all.txt"  
+    beta_shrinked = os.path.join(odir, "prscs/beta_all.txt")
   resources:
     mem_mb = 8000
   shell:
@@ -73,14 +73,14 @@ rule move_and_collect:
 
 rule predict_prscs:
   input:
-    bim = expand("data/geno/qc_geno_chr{chrom}_rsid.bim", 
-                 chrom=range(1,genotype_conf["nchrom"] + 1)),
-    beta_shrinked = "results/{pheno}/prscs/beta_all.txt",
-    genotype_rds = "data/geno/qc_geno_all.rds"
+    bim = expand(os.path.join(geno_dir, "qc_geno_chr{chrom}_rsid.bim"), 
+                 chrom=range(1, genotype_conf["nchrom"] + 1)),
+    beta_shrinked = os.path.join(odir, "prscs/beta_all.txt"),
+    genotype_rds = os.path.join(geno_dir, "qc_geno_all.rds")
   output:
-    pred_file = "results/{pheno}/prscs/prs.rds",
-    pred_csv = "results/{pheno}/prscs/prs.csv",
-    map_file = "results/{pheno}/prscs/map_prs.rds"
+    pred_file = os.path.join(odir, "prscs/prs.rds"),
+    pred_csv = os.path.join(odir, "prscs/prs.csv"),
+    map_file = os.path.join(odir, "prscs/map_prs.rds")
   resources:
     mem_mb=12000
   conda:
