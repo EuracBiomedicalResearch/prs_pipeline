@@ -233,22 +233,23 @@ saveRDS(ldsc, file=heritability_file)
 if (file.exists(model_file)){
   multi_auto <- readRDS(model_file)
 } else {
-t1 <- Sys.time()
-cat("Running LDpred-auto estimation...\n")
-multi_auto <- snp_ldpred2_auto(corr, df_beta_good, h2_init = h2_est,
-                               vec_p_init = seq_log(1e-4, 0.9, length.out = 30),
-                               allow_jump_sign = FALSE, shrink_corr = 0.95,
-                               ncores = NCORES) # 5 min
-# multi_auto <- snp_ldpred2_auto(corr, df_beta_good, h2_init = h2_est,
-#                                vec_p_init = seq_log(1e-4, 0.9, length.out = 30),
-#                                allow_jump_sign = FALSE, shrink_corr = 0.5, use_MLE = FALSE,
-#                                burn_in = 500, num_iter = 500,
-#                                ncores = NCORES, ind.corr=df_beta_good$`_NUM_ID_`) # 
-t2 <- Sys.time()
-cat(glue("LDpred model run in {format(t2-t1)}"),"\n")
-cat(glue("Saving {model_file}..."), "\n")
-saveRDS(multi_auto, file=model_file)
+  t1 <- Sys.time()
+  cat("Running LDpred-auto estimation...\n")
+  multi_auto <- snp_ldpred2_auto(corr, df_beta_good, h2_init = h2_est,
+                                 vec_p_init = seq_log(1e-4, 0.9, length.out = 30),
+                                 allow_jump_sign = FALSE, shrink_corr = 0.95,
+                                 ncores = NCORES) # 5 min
+  # multi_auto <- snp_ldpred2_auto(corr, df_beta_good, h2_init = h2_est,
+  #                                vec_p_init = seq_log(1e-4, 0.9, length.out = 30),
+  #                                allow_jump_sign = FALSE, shrink_corr = 0.5, use_MLE = FALSE,
+  #                                burn_in = 500, num_iter = 500,
+  #                                ncores = NCORES, ind.corr=df_beta_good$`_NUM_ID_`) # 
+  t2 <- Sys.time()
+  cat(glue("LDpred model run in {format(t2-t1)}"),"\n")
+  cat(glue("Saving {model_file}..."), "\n")
+  saveRDS(multi_auto, file=model_file)
 }
+
 system(glue("touch {beta_file}"))
 
 # LDpred2 - grid
@@ -257,12 +258,16 @@ cat("Running ldpred2-grid model\n")
 (h2_seq <- round(h2_est * c(0.01, 0.3, 0.7, 1, 1.4, 2), 4))
 (p_seq <- signif(seq_log(1e-5, 1, length.out = 10), 2))
 (params <- expand.grid(p = p_seq, h2 = h2_seq, sparse = c(FALSE, TRUE)))
-beta_grid <- snp_ldpred2_grid(corr, df_beta_good, params, ncores = NCORES, ind.corr = df_beta_good$`_NUM_ID_`)
-pred_grid <- big_prodMat(G, beta_grid, ind.col = df_beta_good[["_NUM_ID_"]])
-
 saveRDS(params, file=params_grid_file)
+
+beta_grid <- snp_ldpred2_grid(corr, df_beta_good, params, ncores = NCORES, ind.corr = df_beta_good$`_NUM_ID_`)
 saveRDS(beta_grid, file=beta_grid_file)
+
+pred_grid <- big_prodMat(G, beta_grid, ind.col = df_beta_good[["_NUM_ID_"]])
 saveRDS(pred_grid, file=pred_grid_file)
+
+# Quit
+quit(save="no")
 
 #---- Lassosum2 computation ----
 cat("Computing beta with lassosum2...")
@@ -276,7 +281,7 @@ saveRDS(beta_lassosum2, file=beta_file)
 (params2 <- attr(beta_lassosum2, "grid_param"))
 saveRDS(params2, file=params_grid_file)
 
-quit(save="no")
+
 
 cat("Computing best beta...\n")
 # Filter for best chains and average remaining ones

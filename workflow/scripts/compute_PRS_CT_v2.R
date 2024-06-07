@@ -25,6 +25,9 @@ mapfile <- snakemake@input[["map_data"]]
 trainfile <- snakemake@input[["train_data"]]
 gwasfile <- snakemake@input[["gwas_data"]]
 
+pred_rds <- snakemake@output[["pred_rds"]]
+pred_csv <- snakemake@output[["pred_csv"]]
+
 cat(glue("Genotype file: {genofiles}"), "\n")
 cat(glue("Mapfile: {mapfile}"), "\n")
 cat(glue("trainfile: {trainfile}"), "\n")
@@ -169,6 +172,30 @@ if (file.exists(multi_prs_file) & force == FALSE){
   t2 <- Sys.time()
   cat("Thresholding optimiziation done in ", t2 - t1, " sec.\n")
 }
+
+# Save values into a matrix
+# 
+# NB multi_PRS contains the PRS for each of the parameters in the grid.ldS.thr and all_keep grid.
+# store by chromosome, lpthreshold and grid parameters.
+# indices from 1 to nrow(attr(all_keep, "grid")) * length(lpS_thr) are for chromosome 1 and so on
+all_keep <- attr(multi_PRS, "all_keep")
+lpS_thr <- attr(multi_PRS, "grid.lpS.thr")
+
+grids <- attr(all_keep, "grid")
+ngrids <- nrow(grids)
+n_thr <- length(lpS_thr)
+nparams <- ngrids * n_thr
+nchroms <- 22
+
+pred_mat <- matrix(0, ncol=nparams, nrow=nrow(multi_PRS))
+for (i in seq(1, nparams)){
+  ind.col <- seq(i, length.out=nchroms, by=nparams)
+  pred_mat[, i] <- rowSums(multi_PRS[, ind.col])
+}
+pred_mat <- as.data.frame(pred_mat)
+pred_mat <- cbind(familyID=geno$fam$family.ID, sampleID=geno$fam$sample.ID, pred_mat)
+saveRDS(pred_mat, file=)
+
 
 
 t1 <- Sys.time()

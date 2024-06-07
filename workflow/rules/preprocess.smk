@@ -320,16 +320,10 @@ rule get_rsid:
     tabix -s1 -b2 -e2 -S1 {output.rsid_file}
     """
 
-# rule get_hm3:
-#   message:
-#     "Get HM3 data"
-#   output:
-#     hm3 = "resources/ldref"
-#     https://figshare.com/ndownloader/files/37802721
-
 rule get_ld_ref:
   output:
-    hm3_plus = "resources/ld_ref/map_hm3_plus.rds",
+    hm3plus=hm3map
+    # hm3_plus = os.path.join(resource_dir,"ld_ref", "map_hm3_plus.rds"),
   shell:
     """
     wget -O {output.hm3} https://figshare.com/ndownloader/files/37802721
@@ -339,8 +333,9 @@ rule get_ld_ref_mat:
   message:
     "Download hm3plus correlation matrix"
   output:
-    hm3_mat = expand("resources/ld_ref/ldref_hm3_plus/LD_with_blocks_chr{chrom}.rds", 
-                     chrom=range(1,23))
+    hm3_mat = hm3corr
+    # hm3_mat = expand("resources/ld_ref/ldref_hm3_plus/LD_with_blocks_chr{chrom}.rds", 
+    #                  chrom=range(1,23))
   params:
     zipfile ="resources/ld_ref/ldref_hm3_plus.zip" 
   resources:

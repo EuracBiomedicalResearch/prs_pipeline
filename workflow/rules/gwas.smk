@@ -4,9 +4,6 @@ jsonfile = config["gwas_manifest"]
 gwases = json.load(open(jsonfile, "r"))
 gwas_traits = gwases.keys()
 
-def target_rule_gwas():
-  return expand("data/gwas/{pheno}_overall.rds", pheno=gwas_traits)
-
 rule create_gwas_rds:
   message: 
     "Creating RDS file for {input}."

@@ -24,6 +24,7 @@ beta_auto_file <- snakemake@input[["beta_auto"]]
 
 pred_file <- snakemake@output[["pred_rds"]]
 pred_csv <- snakemake@output[["pred_csv"]]
+map_out <- snakemake@output[["map_file"]]
 
 #---- Resources ----
 NCORES <- snakemake@threads
@@ -73,3 +74,8 @@ saveRDS(pred_auto, file=pred_file)
 cat("Saving prediction to file csv...\n")
 prs <- data.table(family.ID=faminfo$family.ID, sampleID=faminfo$sample.ID, prs_ldpred2_auto=pred_auto)
 write.table(prs, file=pred_csv, sep="\t", row.names=FALSE, col.names=FALSE)
+
+#---- Save betas ----
+cat("Saving betas..\n")
+df_beta$beta_prs <- beta_auto
+saveRDS(df_beta, file=map_out)

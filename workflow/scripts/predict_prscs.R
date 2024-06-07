@@ -76,5 +76,8 @@ saveRDS(betas_match, file=map_file)
 #---- Save predictions ----
 # exporttdf <- data.table(AID=geno$fam$sample.ID, prs_prscs=prscs_pred)
 prs <- data.table(family.ID=geno$fam$family.ID, sampleID=geno$fam$sample.ID, prs_prscs=prscs_pred)
+# save RDS
 saveRDS(prs, file=pred_file)
 
+# Save CSV
+write.table(prs, file=pred_csv, col.names=TRUE, row.names=FALSE, sep="\t")

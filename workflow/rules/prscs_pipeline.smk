@@ -78,9 +78,9 @@ rule predict_prscs:
     beta_shrinked = "results/{pheno}/prscs/beta_all.txt",
     genotype_rds = "data/geno/qc_geno_all.rds"
   output:
-    pred_file = "results/{pheno}/prscs/pred_prscs.rds",
-    pred_csv = "results/{pheno}/prscs/pred_prscs.csv",
-    map_file = "results/{pheno}/prscs/map_prscs.rds"
+    pred_file = "results/{pheno}/prscs/prs.rds",
+    pred_csv = "results/{pheno}/prscs/prs.csv",
+    map_file = "results/{pheno}/prscs/map_prs.rds"
   resources:
     mem_mb=12000
   conda:

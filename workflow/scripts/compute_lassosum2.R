@@ -1,12 +1,10 @@
-#!/shared/bioinf/R/bin/Rscript-4.3-BioC3.17
-
 #---- Libraries ----
 library(dplyr)
 library(stringr)
 library(ggplot2)
 library(forcats)
 library(glue)
-library(bigsnpr, lib.loc = "/home/mfilosi/R/rocker-rstudio/4.2")
+library(bigsnpr)
 library(data.table)
 
 # Avoid nested parallel computation...
@@ -137,7 +135,7 @@ for (mychr in 1:22){
     corr$add_columns(corr_chr, nrow(corr))
   }
   tc2 <- Sys.time()
-  cat(glue("Chromosome {chr} computed in: {format(tc2-tc1)}"), "\n")
+  cat(glue("Chromosome {mychr} computed in: {format(tc2-tc1)}"), "\n")
 }
 t2 <- Sys.time()
 cat(glue("Compute correlation in {format(t2-t1)}...\n"))
