@@ -231,7 +231,7 @@ rule get_rsid:
   message:
     "Download rsid database"
   output:
-    rsid_file = rsidfilevar
+    rsid_file = protected(rsidfilevar)
   params:
     rsfile = lambda wildcards, output: os.path.basename(output.rsid_file).replace("index.gz", "tsv.gz")
   resources:
@@ -246,7 +246,7 @@ rule get_rsid:
 
 rule get_ld_ref:
   output:
-    hm3plus=hm3map
+    hm3plus = protected(hm3map)
   shell:
     """
     wget -O {output.hm3} https://figshare.com/ndownloader/files/37802721
@@ -256,7 +256,7 @@ rule get_ld_ref_mat:
   message:
     "Download hm3plus correlation matrix"
   output:
-    hm3_mat = hm3corr
+    hm3_mat = protected(hm3corr)
   params:
     zipfile ="resources/ld_ref/ldref_hm3_plus.zip" 
   resources:
