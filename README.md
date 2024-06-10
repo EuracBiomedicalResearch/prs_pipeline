@@ -62,3 +62,13 @@ columns specification as a python dictionary mapping.
 - **CT method** (implemented in [`bigsnpr` package](https://privefl.github.io/bigsnpr))
 - **sBayesR** (implemented in [gctb](https://cnsgenomics.com/software/gctb/#Overview)) - under
     development
+
+# Running
+
+Once edited the `config.yaml` file you can run the pipeline with the following command.
+Needed softwares, packages and files are handled by `snakemake`.
+
+```
+cd prs_pipeline
+snakemake --cores all --use-conda
+```

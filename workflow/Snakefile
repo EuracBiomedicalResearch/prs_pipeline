@@ -34,3 +34,6 @@ rule all:
     # **target_rule_prscs(),
     # **target_rule_ldpred2()
     # **target_rule_sct()
+rule all_plots:
+  input:
+    target_rule_plots()

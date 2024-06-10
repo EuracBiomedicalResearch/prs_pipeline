@@ -164,13 +164,15 @@ rule compute_distance:
 
 rule qc_plot:
   input:
-    map_rds = "data/geno/qc_geno_all_map_gendist.rds",
+    map_rds = "data/geno/qc_geno_all_map.rds",
     gwas_rds = "data/gwas/{pheno}_overall.rds"
   output:
     plot_file = "results/{pheno}/bad_variants.png",
     plot_file2 = "results/{pheno}/beta_distribution.png"
   resources:
     mem_mb=24000
+  conda:
+    "../envs/bigsnpr.yaml"
   script:
     "../scripts/qc_plot.R"
 

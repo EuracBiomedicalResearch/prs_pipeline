@@ -236,7 +236,7 @@ if (file.exists(model_file)){
   t1 <- Sys.time()
   cat("Running LDpred-auto estimation...\n")
   multi_auto <- snp_ldpred2_auto(corr, df_beta_good, h2_init = h2_est,
-                                 vec_p_init = seq_log(1e-4, 0.9, length.out = 30),
+                                 vec_p_init = seq_log(1e-4, 0.9, length.out = 10),
                                  allow_jump_sign = FALSE, shrink_corr = 0.95,
                                  ncores = NCORES) # 5 min
   # multi_auto <- snp_ldpred2_auto(corr, df_beta_good, h2_init = h2_est,
@@ -260,7 +260,7 @@ cat("Running ldpred2-grid model\n")
 (params <- expand.grid(p = p_seq, h2 = h2_seq, sparse = c(FALSE, TRUE)))
 saveRDS(params, file=params_grid_file)
 
-beta_grid <- snp_ldpred2_grid(corr, df_beta_good, params, ncores = NCORES, ind.corr = df_beta_good$`_NUM_ID_`)
+beta_grid <- snp_ldpred2_grid(corr, df_beta_good, params, ncores = NCORES)#, ind.corr = df_beta_good$`_NUM_ID_`)
 saveRDS(beta_grid, file=beta_grid_file)
 
 pred_grid <- big_prodMat(G, beta_grid, ind.col = df_beta_good[["_NUM_ID_"]])
