@@ -171,6 +171,14 @@ def target_rule_prs():
       pass
   return output_files
 
+
+def target_rule_plots():
+  ofiles = [expand(os.path.join(odir, "bad_variants.png"), pheno=gwas_traits),
+  expand(os.path.join(odir, "beta_distribution.png"), pheno=gwas_traits)]
+  return ofiles
+ 
+
+
 # # PRS-CS
 # def target_rule_prscs():
 

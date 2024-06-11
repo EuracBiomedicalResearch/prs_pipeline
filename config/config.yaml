@@ -33,7 +33,7 @@ cache_dir: "/storage03/mfilosi/CKDgenPRS/prs_pipeline/resources"
 # PRS-method activation
 prs_algorithms:
   ldpred2:
-    activate: false
+    activate: true
   lassosum2:
     activate: true
   prscs:

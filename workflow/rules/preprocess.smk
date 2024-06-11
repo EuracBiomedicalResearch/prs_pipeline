@@ -164,13 +164,15 @@ rule compute_distance:
 
 rule qc_plot:
   input:
-    map_rds = "data/geno/qc_geno_all_map_gendist.rds",
+    map_rds = "data/geno/qc_geno_all_map.rds",
     gwas_rds = "data/gwas/{pheno}_overall.rds"
   output:
     plot_file = "results/{pheno}/bad_variants.png",
     plot_file2 = "results/{pheno}/beta_distribution.png"
   resources:
     mem_mb=24000
+  conda:
+    "../envs/bigsnpr.yaml"
   script:
     "../scripts/qc_plot.R"
 
@@ -229,7 +231,7 @@ rule get_rsid:
   message:
     "Download rsid database"
   output:
-    rsid_file = rsidfilevar
+    rsid_file = protected(rsidfilevar)
   params:
     rsfile = lambda wildcards, output: os.path.basename(output.rsid_file).replace("index.gz", "tsv.gz")
   resources:
@@ -244,7 +246,7 @@ rule get_rsid:
 
 rule get_ld_ref:
   output:
-    hm3plus=hm3map
+    hm3plus = protected(hm3map)
   shell:
     """
     wget -O {output.hm3} https://figshare.com/ndownloader/files/37802721
@@ -254,7 +256,7 @@ rule get_ld_ref_mat:
   message:
     "Download hm3plus correlation matrix"
   output:
-    hm3_mat = hm3corr
+    hm3_mat = protected(hm3corr)
   params:
     zipfile ="resources/ld_ref/ldref_hm3_plus.zip" 
   resources:

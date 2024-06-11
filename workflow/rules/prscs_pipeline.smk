@@ -93,7 +93,7 @@ rule get_ld_ref_prscs:
   message:
     "Download ld reference"
   output: 
-    get_ldblk_files()
+    protected(get_ldblk_files())
   params:
     url = get_ldblk_url,
     odir = get_ldblk_zip()
