@@ -1,6 +1,6 @@
 # Configuration
 
-Different option can be change in the [config/config.yaml](config/config.yaml) file.
+Different option can be change in the [config/config.yaml](config.yaml) file.
 
 ## Output
 

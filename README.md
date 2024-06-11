@@ -72,3 +72,7 @@ Needed softwares, packages and files are handled by `snakemake`.
 cd prs_pipeline
 snakemake --cores all --use-conda
 ```
+
+# Contacts
+
+- [Michele Filosi](michele.filosi@gmail.com)
