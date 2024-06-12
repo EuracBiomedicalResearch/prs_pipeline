@@ -2,6 +2,7 @@ import json
 import os
 import itertools as it
 from snakemake.utils import validate
+from snakemake.rules import expand
 
 # Validate the config file
 validate(config, schema="../schemas/config.schema.yaml")
@@ -50,24 +51,35 @@ def add_plink_ext(infile):
   myext = ["bed", "bim", "fam"]
   return {k: infile + f".{k}" for k in myext}
 
+# def get_file_name():
+
+
 def get_reference(wildcards):
-  if genotype_conf["nchrom"] == 1:
-    ref_files = genotype_conf["plinkfiles"]["1"]
+  # if genotype_conf["nchrom"] == 1:
+  #   ref_files = genotype_conf["plinkfiles"]["1"]
+  # else:
+  file_format = genotype_conf["format"]
+  if genotype_conf["divided_by_chrom"]:
+    if file_format == "plink":
+      ref_files = genotype_conf["files"][wildcards.chrom]
+    elif file_format == "vcf":
+      ref_files = genotype_conf["files"][wildcards.chrom]
+      ref_files = os.path.basename(ref_files).replace("vcf.gz", "")
+      ref_files = os.path.join("tmp-data/geno", ref_files)
   else:
-    ref_files = genotype_conf["plinkfiles"][wildcards.chrom]
+    ref_files = genotype_conf["files"]["all"]
+    ref_files = ref_files.replace("vcf.gz", "")
+    ref_files = ref_files + "chr{}".format(wildcards.chrom)
 
   out_dict = add_plink_ext(ref_files)
   return out_dict
 
-# Get files to combine
 def get_all_ref(wildcards):
   flist = []
-  for i, e in it.product(range(genotype_conf["nchrom"]), 
-                         [".bed", ".bim", ".fam"]):
-    chrom = i + 1
+  nchrom = genotype_conf["nchrom"]
+  for i, e in it.product(range(nchrom), [".bed", ".bim", ".fam"]):
     flist.append(os.path.join(geno_dir, "qc_geno_chr{chrom}{e}"))
 
-  nchrom = genotype_conf["nchrom"]
   flist = expand(os.path.join(geno_dir, "qc_geno_chr{chrom}{ext}"), chrom=range(1, nchrom + 1), 
                 ext=[".bed", ".bim", ".fam"])
   return flist
