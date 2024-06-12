@@ -1,0 +1,29 @@
+{
+  "divided_by_chrom": true,
+  "nchrom": 22,
+  "format": "plink",
+  "files": {
+    "1": "data/public-data3/public-data3_chr1",
+    "2": "data/public-data3/public-data3_chr2",
+    "3": "data/public-data3/public-data3_chr3",
+    "4": "data/public-data3/public-data3_chr4",
+    "5": "data/public-data3/public-data3_chr5",
+    "6": "data/public-data3/public-data3_chr6",
+    "7": "data/public-data3/public-data3_chr7",
+    "8": "data/public-data3/public-data3_chr8",
+    "9": "data/public-data3/public-data3_chr9",
+    "10": "data/public-data3/public-data3_chr10",
+    "11": "data/public-data3/public-data3_chr11",
+    "12": "data/public-data3/public-data3_chr12",
+    "13": "data/public-data3/public-data3_chr13",
+    "14": "data/public-data3/public-data3_chr14",
+    "15": "data/public-data3/public-data3_chr15",
+    "16": "data/public-data3/public-data3_chr16",
+    "17": "data/public-data3/public-data3_chr17",
+    "18": "data/public-data3/public-data3_chr18",
+    "19": "data/public-data3/public-data3_chr19",
+    "20": "data/public-data3/public-data3_chr20",
+    "21": "data/public-data3/public-data3_chr21",
+    "22": "data/public-data3/public-data3_chr22"
+  }
+}
