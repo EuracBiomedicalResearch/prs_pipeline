@@ -21,12 +21,16 @@ rule annotate_bim:
     rsidfile = ancient(rsidfilevar)
   output:
     bim_anno = os.path.join(geno_dir, "qc_geno_chr{chrom}_rsid.bim"),
+  conda:
+    "../envs/bcftools.yaml"
   resources:
     mem_mb = 8000
-  shell:
-    """
-    python workflow/scripts/reannotate_bim_files.py {input.bim} {input.rsidfile} --chrom {wildcards.chrom} --out {output.bim_anno}
-    """
+  # shell:
+  #   """
+  #   python scripts/reannotate_bim_files.py {input.bim} {input.rsidfile} --chrom {wildcards.chrom} --out {output.bim_anno}
+  #   """
+  script:
+    "../scripts/reannotate_bim_files_2.py"
 
 rule run_prscs:
   input:
@@ -101,7 +105,7 @@ rule get_ld_ref_prscs:
     mem_mb=12000
   shell:
     """
-    if [ -f {params.odir} ];
+    if [ ! -f {params.odir} ];
     then
       wget -O {params.odir} {params.url}
     fi

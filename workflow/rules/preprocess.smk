@@ -233,14 +233,20 @@ rule get_rsid:
   output:
     rsid_file = protected(rsidfilevar)
   params:
-    rsfile = lambda wildcards, output: os.path.basename(output.rsid_file).replace("index.gz", "tsv.gz")
+    rsfile = lambda wildcards, output: os.path.basename(output.rsid_file).replace("index.gz", "tsv.gz"),
+    resource_dir = resource_dir
+  conda:
+    "../envs/bcftools.yaml"
   resources:
     mem_mb=8000
   shell:
     """
-    wget -O resources/{params.rsfile} https://resources.pheweb.org/{params.rsfile} 
+    if [ ! -f {params.resource_dir}/{params.rsfile} ]
+    then
+      wget -O {params.resource_dir}/{params.rsfile} https://resources.pheweb.org/{params.rsfile}
+    fi
     echo -e "CHROM\tPOS\tRSID\tREF\tALT" | bgzip -c > {output.rsid_file}
-    zcat resources/{params.rsfile} | bgzip -c >> {output.rsid_file}
+    zcat {params.resource_dir}/{params.rsfile} | bgzip -c >> {output.rsid_file}
     tabix -s1 -b2 -e2 -S1 {output.rsid_file}
     """
 
@@ -249,7 +255,7 @@ rule get_ld_ref:
     hm3plus = protected(hm3map)
   shell:
     """
-    wget -O {output.hm3} https://figshare.com/ndownloader/files/37802721
+    wget -O {output.hm3plus} https://figshare.com/ndownloader/files/37802721
     """
 
 rule get_ld_ref_mat:
@@ -258,12 +264,15 @@ rule get_ld_ref_mat:
   output:
     hm3_mat = protected(hm3corr)
   params:
-    zipfile ="resources/ld_ref/ldref_hm3_plus.zip" 
+    zipfile = hm3zip
   resources:
     mem_mb=8000
   shell:
     """
-    gdown -O {params.zipfile} https://drive.google.com/uc?id=17dyKGA2PZjMsivlYb_AjDmuZjM1RIGvs
-    unzip {output.hm3_mat} -d resources/ld_ref/ldref_hm3_plus
+    if [ ! -f {params.zipfile} ]
+    then
+      gdown -O {params.zipfile} https://drive.google.com/uc?id=17dyKGA2PZjMsivlYb_AjDmuZjM1RIGvs
+    fi
+    # unzip {output.hm3_mat} -d resources/ld_ref/ldref_hm3_plus
+    unzip {params.zipfile} -d resources/ld_ref/ldref_hm3_plus
     """
-

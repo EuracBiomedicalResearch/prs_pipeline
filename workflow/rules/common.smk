@@ -33,12 +33,15 @@ for k, v in gwases.items():
   validate(v, schema="../schemas/gwas_manifest.schema.yaml")
 
 # Create path for rsid file
-rsidfilevar = os.path.join(resource_dir, "rsid", 
-                           f"rsids-v154-{genotype_conf['build']}.index.gz")
-hm3corr = expand(os.path.join(resource_dir, "ld_ref", "ldref_hm3_plus", 
-                                    "LD_with_blocks_chr{chrom}.rds"), 
-                     chrom=range(1,23))
-hm3map = os.path.join(resource_dir, "ld_ref", "map_hm3_plus.rds")
+rsidfilevar = os.path.join(resource_dir, "rsid", f"rsids-v154-{genotype_conf['build']}.index.gz")
+
+# Get hm3 high quality variants from web resources
+hm3path = os.path.join(resource_dir, "ld_ref")
+hm3zip = os.path.join(hm3path, "ldref_hm3_plus.zip")
+hm3corr = expand(os.path.join(hm3path, "ldref_hm3_plus", "LD_with_blocks_chr{chrom}.rds"), chrom=range(1,23))
+hm3map = os.path.join(hm3path, "map_hm3_plus.rds")
+hm3matout = os.path.join(hm3path, "ldref_hm3_plus")
+
 
 # Get LD reference configuration
 ldref = config["ld_reference"]
