@@ -48,6 +48,7 @@ gwas <- readRDS(gwas_rds)
 #---- Merge with local genotypes ----
 cat("Merging snps...\n")
 df_beta <- snp_match(gwas, map)
+names(df_beta)[which(names(df_beta) == "_NUM_ID_.ss")] <- "_NUM_ID_.SUMSTAT"
 
 #---- Load training dataset phenotypes ----
 # Remove following lines for local run/debug

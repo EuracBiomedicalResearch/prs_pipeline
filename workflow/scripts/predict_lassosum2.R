@@ -21,7 +21,7 @@ geno <- snp_attach(geno_file)
 df_beta_lasso <- readRDS(df_beta_file)
 
 #---- Compute prediction ----
-pred_lasso <- big_prodMat(geno$genotypes, beta_lasso, ind.col = df_beta_lasso$`_NUM_ID_`)
+pred_lasso <- big_prodMat(geno$genotypes, beta_lasso, ind.col = df_beta_lasso$`_NUM_ID_.ss`)
 
 #---- Save prediction files ----
 saveRDS(pred_lasso, file=pred_file)

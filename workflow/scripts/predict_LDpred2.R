@@ -63,7 +63,7 @@ fam_info <- geno$fam
 G <- geno$genotypes
 cat("Computing predictions...\n")
 pred_auto <- big_prodVec(G, beta_auto, 
-                         ind.col = df_beta$`_NUM_ID_`, 
+                         ind.col = df_beta$`_NUM_ID_.ss`,
                          ncores=NCORES)
 
 #---- Save predictions into a rdsfile ----
@@ -72,7 +72,7 @@ saveRDS(pred_auto, file=pred_file)
 
 #---- Save predictions into a csv file ----
 cat("Saving prediction to file csv...\n")
-prs <- data.table(family.ID=faminfo$family.ID, sampleID=faminfo$sample.ID, prs_ldpred2_auto=pred_auto)
+prs <- data.table(family.ID=fam_info$family.ID, sampleID=fam_info$sample.ID, prs_ldpred2_auto=pred_auto)
 write.table(prs, file=pred_csv, sep="\t", row.names=FALSE, col.names=FALSE)
 
 #---- Save betas ----
