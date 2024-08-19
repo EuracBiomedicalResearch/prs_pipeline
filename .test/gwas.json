@@ -1,0 +1,19 @@
+{
+  "eGFR": {
+    "path": "data/19-Dec-22_MW_eGFR_overall_EA_subtracted_CHRIS5K.txt.gz",
+    "columns": {
+      "chr": "Chr",
+      "pos": "Pos_b37",
+      "id": "RSID",
+      "a0": "Allele2",
+      "a1": "Allele1",
+      "freq": "Freq1",
+      "beta": "Effect",
+      "beta_se": "StdErr",
+      "p":  "P.value",
+      "n_eff": "n_total_sum"
+    },
+    "header": true,
+    "trait_type": "quantitative" 
+  }
+}
