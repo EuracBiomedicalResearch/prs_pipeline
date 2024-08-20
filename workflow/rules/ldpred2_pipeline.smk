@@ -78,6 +78,8 @@ rule prs_LDpred2:
   resources:
     mem_mb = 24000,
     tmpdir = "tmp-data"
+  params:
+    genotype_conf = genotype_conf
   threads: 12
   conda:
     "../envs/bigsnpr.yaml"
@@ -122,6 +124,8 @@ rule prs_lassosum2:
     os.path.join(odir, "lassosum2/beta_lassosum2.rds"),
     os.path.join(odir, "lassosum2/df_beta_good_lassosum.rds"),
     os.path.join(odir, "lassosum2/params_grid_lassosum.rds")
+  params:
+    genotype_conf = genotype_conf
   threads: 8
   resources:
     mem_mb = 64000,

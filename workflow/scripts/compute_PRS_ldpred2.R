@@ -23,6 +23,7 @@ ldfiles <- snakemake@input[["ldfiles"]]
 corfiles <- snakemake@input[["corfiles"]]
 geno_file <- snakemake@input[["genotype_rds"]]
 pheno <- snakemake@wildcards[["pheno"]]
+genotype_conf <- snakemake@params[["genotype_conf"]]
 
 # Remove following lines for local run/debug
 # ldfiles <- list.files("ld_ref", pattern="ld_chr")
@@ -37,6 +38,8 @@ df_beta_good_rds <- snakemake@output[[4]]
 beta_grid_file <- snakemake@output[[5]]
 pred_grid_file <- snakemake@output[[6]]
 params_grid_file <- snakemake@output[[7]]
+
+print(genotype_conf$build)
 
 #---- Resources ----
 NCORES <- snakemake@threads
@@ -63,6 +66,12 @@ names(df_beta)[which(names(df_beta) == "_NUM_ID_.ss")] <- "_NUM_ID_.SUMSTAT"
 
 #---- Load LDref file ----
 mapLDref <- readRDS(map_ld_rds)
+
+# Handle hg38 LDreference from bigsnpr
+if (genotype_conf$build == "hg38"){
+  setnames(mapLDref, "pos", "pos_hg37")
+  setnames(mapLDref, "pos_hg38", "pos")
+}
 
 #---- Match with LDref ----
 df_beta_good <- snp_match(df_beta, mapLDref, match.min.prop = 0)
