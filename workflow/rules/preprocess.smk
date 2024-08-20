@@ -89,10 +89,8 @@ rule merge_all_genotypes:
     mem_mb=72000
   conda:
     "../envs/plink.yaml"
-  shell:
-    'plink --merge-list {input} --memory {resources.mem_mb} --make-bed --out {params.prefixo}'
-  # script:
-  #   "../scripts/plink_merge.py"
+  script:
+    "../scripts/plink_merge.py"
 
 rule import_genotype_into_r:
   message:
