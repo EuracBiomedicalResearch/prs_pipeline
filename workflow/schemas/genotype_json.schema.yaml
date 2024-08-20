@@ -20,7 +20,7 @@ properties:
   plinkfiles:
     type: object
 
-  required:
-    - build
-    - nchrom
-    - plinkfiles
+required:
+  - build
+  - nchrom
+  - plinkfiles

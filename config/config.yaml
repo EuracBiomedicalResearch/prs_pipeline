@@ -4,7 +4,7 @@ data_dir: "data"
 
 # Directory of the genotype file
 # genotype_path: "/scratch/compgen/data/genetics/CHRIS13K/Imputation/HRC/plinkFormat"
-genotype_json: "config/genotype.json"
+#genotype_json: "config/genotype.json"
 
 # Genotype QC parameters:
 maf: 0.05
@@ -13,7 +13,7 @@ genorate: 0.1
 mind: 0.1
 
 # GWAS directory:
-gwas_manifest: "config/gwas.json"
+# gwas_manifest: "config/gwas.json"
 
 # Genetic parameters:
 # genetic_distance:

@@ -1,9 +1,9 @@
 {
   "divided_by_chrom": false,
-  "nchrom": 22,
+  "nchrom": 1,
   "build": "hg19",
   "format": "plink",
-  "files": {
-      "all": "data/public-data3"
+  "plinkfiles": {
+      "1": "data/public-data3/public-data3"
   }
 }
