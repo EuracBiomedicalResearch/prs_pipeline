@@ -20,8 +20,6 @@ resource_dir = config["cache_dir"]
 if not os.path.isdir(resource_dir):
   resource_dir = "resources"
 
-# Genotype configuation
-genotype_conf = json.load(open(config["genotype_json"], "r"))
 
 # GWAS configuration
 jsonfile = config["gwas_manifest"]
@@ -180,6 +178,9 @@ def target_rule_plots():
   expand(os.path.join(odir, "beta_distribution.png"), pheno=gwas_traits)]
   return ofiles
  
+
+def get_formatbooks():
+  return os.path.join(resource_dir, "formatbook", "formatbook.json")
 
 
 # # PRS-CS

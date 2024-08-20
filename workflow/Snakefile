@@ -6,7 +6,6 @@ min_version("8.4.8")
 # Config file
 configfile: "config/config.yaml"
 
-
 # Setup singularity
 # container: "docker://continuumio/miniconda3"
 # container: "docker://mambaorg/micromamba"
@@ -37,3 +36,7 @@ rule all:
 rule all_plots:
   input:
     target_rule_plots()
+
+rule gwas_rds:
+  input:
+    target_rule_preproc()
