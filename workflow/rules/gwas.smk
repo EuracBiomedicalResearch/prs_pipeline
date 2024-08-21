@@ -12,7 +12,7 @@ rule create_gwas_rds:
     gwas_file = lookup("{pheno}/path", within=gwases),
     formats = get_formatbooks()
   output:
-    gwas_rds = "results/{pheno}/gwas.rds"
+    gwas_rds = os.path.join(odir, "gwas.rds")
   params:
     gwas_conf = lookup("{pheno}", within=gwases),
     res_dir = resource_dir

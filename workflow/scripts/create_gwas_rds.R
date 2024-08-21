@@ -53,5 +53,14 @@ setnames(gwas_data, names(fmt_2_R), as.character(fmt_2_R), skip_absent = TRUE)
 
 # TODO: Add filter for Minor allele frequency
 
+# TODO: Compute column P of p-values when only log10p is provided and the opposite
+
+# TODO: Add n_eff when binary phenotype is available and N_Cases and N_Controls are available
+# dirty solution provided here based on https://privefl.github.io/bigsnpr/articles/LDpred2.html,
+# something better should be provided...
+if (any(names(gwas) == "n_eff")){
+  gwas_data[, n_eff:=quantile(8 / beta_se^2, 0.999)]
+}
+
 #---- Save RDS ----
 saveRDS(gwas_data, file=outfile)

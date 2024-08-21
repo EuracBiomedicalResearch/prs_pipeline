@@ -1,4 +1,4 @@
-import glob
+import os
 
 wildcard_constraints:
   chrom=r"\d+"
@@ -18,9 +18,9 @@ wildcard_constraints:
 
 rule create_snplist:
   input:
-    mafr2 = 'data/geno/qc/chr{chrom}_maf_r2.txt'
+    mafr2 = os.path.join(geno_dir, 'qc', 'chr{chrom}_maf_r2.txt')
   output:
-    snplist = 'data/geno/qc/snplist_chr{chrom}.txt'
+    snplist = os.path.join(geno_dir, 'qc', 'snplist_chr{chrom}.txt')
   resources:
     mem_mb = 8000
   threads: 1
@@ -34,9 +34,9 @@ rule genotype_QC:
   input: 
     unpack(get_reference)
   output:
-    bed='data/geno/qc_geno_chr{chrom}.bed',
-    bim='data/geno/qc_geno_chr{chrom}.bim',
-    fam='data/geno/qc_geno_chr{chrom}.fam'
+    bed = os.path.join(geno_dir, 'qc_geno_chr{chrom}.bed'),
+    bim = os.path.join(geno_dir, 'qc_geno_chr{chrom}.bim'),
+    fam = os.path.join(geno_dir, 'qc_geno_chr{chrom}.fam')
   params:
     prefixi = lambda wildcards, input: input.bed.replace(".bed", ""),
     prefixo = lambda wildcards, output: output.bed.replace(".bed", ""),
@@ -77,9 +77,9 @@ rule merge_all_genotypes:
   input:
     rules.write_genotype_mergelist.output #'merge_list_all.txt'
   output:
-    bed = "data/geno/qc_geno_chrall.bed",
-    bim = "data/geno/qc_geno_chrall.bim",
-    fam = "data/geno/qc_geno_chrall.fam"
+    bed = os.path.join(geno_dir, "qc_geno_chrall.bed"),
+    bim = os.path.join(geno_dir, "qc_geno_chrall.bim"),
+    fam = os.path.join(geno_dir, "qc_geno_chrall.fam")
   params:
     prefixo=lambda wildcards, output: output.bed.replace('.bed', '')
   message:
@@ -95,27 +95,27 @@ rule import_genotype_into_r:
   message:
     "Import genotype datya into R using bigsnpr structure"
   input:
-    bed = ancient("data/geno/qc_geno_chrall.bed"),
-    bim = ancient("data/geno/qc_geno_chrall.bim"),
-    fam = ancient("data/geno/qc_geno_chrall.fam")
+    bed = ancient(os.path.join(geno_dir, "qc_geno_chrall.bed")),
+    bim = ancient(os.path.join(geno_dir, "qc_geno_chrall.bim")),
+    fam = ancient(os.path.join(geno_dir, "qc_geno_chrall.fam"))
   output:
-    'data/geno/qc_geno_all.rds',
-    'data/geno/qc_geno_all.bk',
-    'data/geno/qc_geno_all_map.rds'
+    os.path.join(geno_dir, "qc_geno_all.rds"),
+    os.path.join(geno_dir, "qc_geno_all.bk"),
+    os.path.join(geno_dir, "qc_geno_all_map.rds")
   threads: 16 
   resources: 
     mem_mb = 64000,
-    tmpdir = 'tmp-data'
+    tmpdir = "tmp-data"
   conda:
     "../envs/bigsnpr.yaml"
   script:
-    '../scripts/load_genotype_all.R'
+    "../scripts/load_genotype_all.R"
 
 rule compute_distance:
   input:
-    mapfile = "data/geno/qc_geno_all_map.rds"
+    mapfile = os.path.join(geno_dir, "qc_geno_all_map.rds")
   output:
-    "data/geno/qc_geno_all_map_gendist.rds"
+    os.path.join(geno_dir, "qc_geno_all_map_gendist.rds")
   threads: 12
   resources:
     mem_mb = 32000,
@@ -162,11 +162,11 @@ rule compute_distance:
 
 rule qc_plot:
   input:
-    map_rds = "data/geno/qc_geno_all_map.rds",
-    gwas_rds = "data/gwas/{pheno}_overall.rds"
+    map_rds = os.path.join(geno_dir, "qc_geno_all_map.rds"),
+    gwas_rds = os.path.join(data_dir, "gwas", "{pheno}_overall.rds")
   output:
-    plot_file = "results/{pheno}/bad_variants.png",
-    plot_file2 = "results/{pheno}/beta_distribution.png"
+    plot_file = os.path.join(odir, "bad_variants.png"),
+    plot_file2 = os.path.join(odir, "beta_distribution.png")
   resources:
     mem_mb=24000
   conda:
@@ -264,7 +264,7 @@ rule get_ld_ref_mat:
   params:
     zipfile = hm3zip
   resources:
-    mem_mb=8000
+    mem_mb = 8000
   shell:
     """
     if [ ! -f {params.zipfile} ]
