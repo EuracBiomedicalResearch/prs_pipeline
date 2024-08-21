@@ -1,10 +1,10 @@
 # Global configuration file
-output_dir: "results_hg19"
-data_dir: "data_hg19"
+output_dir: "results_hg38"
+data_dir: "data_hg38"
 
 # Directory of the genotype file
 # genotype_path: "/scratch/compgen/data/genetics/CHRIS13K/Imputation/HRC/plinkFormat"
-genotype_json: ".test/genotype_public-data3.json"
+genotype_json: ".test/genotype_public-data3_hg38.json"
 
 # Genotype QC parameters:
 maf: 0.05
@@ -13,7 +13,7 @@ genorate: 0.1
 mind: 0.1
 
 # GWAS directory:
-gwas_manifest: ".test/gwas_eGFR_hg19.json"
+gwas_manifest: ".test/gwas_PD_hg38.json"
 
 # Genetic parameters:
 # genetic_distance:

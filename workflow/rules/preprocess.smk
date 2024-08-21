@@ -30,10 +30,9 @@ rule create_snplist:
   script:
     'scripts/create_snplist.py'
 
-# TODO: Add split in chromosomes if only 1 plink file is passed
 rule genotype_QC:
   input: 
-    unpack(get_reference),
+    unpack(get_reference)
   output:
     bed='data/geno/qc_geno_chr{chrom}.bed',
     bim='data/geno/qc_geno_chr{chrom}.bim',
@@ -66,7 +65,7 @@ rule write_genotype_mergelist:
   input:
       get_all_ref
   output:
-      'merge_list_all.txt'
+      os.path.join(geno_dir, 'merge_list_all.txt')
   run:
       with open(output[0], 'w') as f:
           for i in input:
@@ -76,7 +75,7 @@ rule write_genotype_mergelist:
 
 rule merge_all_genotypes:
   input:
-    'merge_list_all.txt'
+    rules.write_genotype_mergelist.output #'merge_list_all.txt'
   output:
     bed = "data/geno/qc_geno_chrall.bed",
     bim = "data/geno/qc_geno_chrall.bim",
@@ -89,9 +88,8 @@ rule merge_all_genotypes:
     mem_mb=72000
   conda:
     "../envs/plink.yaml"
-  shell:
-    'plink --merge-list {input} --memory {resources.mem_mb} --make-bed --out {params.prefixo}'
-
+  script:
+    "../scripts/plink_merge.py"
 
 rule import_genotype_into_r:
   message:
@@ -275,4 +273,14 @@ rule get_ld_ref_mat:
     fi
     # unzip {output.hm3_mat} -d resources/ld_ref/ldref_hm3_plus
     unzip {params.zipfile} -d resources/ld_ref/ldref_hm3_plus
+    """
+
+rule get_gwas_formats:
+  output:
+    protected(get_formatbooks())
+  params:
+    resource_dir= resource_dir
+  shell:
+    """
+    git clone https://github.com/Cloufield/formatbook.git {params.resource_dir}/formatbook
     """
