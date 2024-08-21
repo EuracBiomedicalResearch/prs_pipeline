@@ -19,3 +19,8 @@ genetic_data.json
 # resources and tmp-data
 resource*
 tmp-data*
+
+# RData
+*.RData
+*.Rhistory
+*history
