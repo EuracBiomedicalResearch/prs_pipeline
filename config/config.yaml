@@ -12,8 +12,10 @@ hwe: 1e-50
 genorate: 0.1
 mind: 0.1
 
+# TODO: Add GWAS QC parameters
+
 # GWAS directory:
-# gwas_manifest: "config/gwas.json"
+# gwas_manifest: "config/gwas_eGFR_hg19.json"
 
 # Genetic parameters:
 # genetic_distance:

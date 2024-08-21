@@ -30,7 +30,6 @@ rule create_snplist:
   script:
     'scripts/create_snplist.py'
 
-# TODO: Add split in chromosomes if only 1 plink file is passed
 rule genotype_QC:
   input: 
     unpack(get_reference)
@@ -66,7 +65,7 @@ rule write_genotype_mergelist:
   input:
       get_all_ref
   output:
-      'merge_list_all.txt'
+      os.path.join(geno_dir, 'merge_list_all.txt')
   run:
       with open(output[0], 'w') as f:
           for i in input:
@@ -76,7 +75,7 @@ rule write_genotype_mergelist:
 
 rule merge_all_genotypes:
   input:
-    'merge_list_all.txt'
+    rules.write_genotype_mergelist.output #'merge_list_all.txt'
   output:
     bed = "data/geno/qc_geno_chrall.bed",
     bim = "data/geno/qc_geno_chrall.bim",

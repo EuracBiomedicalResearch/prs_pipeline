@@ -21,8 +21,6 @@ geno_file <- snakemake@input[["genotype_rds"]]
 pheno <- snakemake@wildcards[["pheno"]]
 genotype_conf <- snakemake@params[["genotype_conf"]]
 
-# Remove following lines for local run/debug
-# print(ldfiles)
 
 # Output
 beta_file <- snakemake@output[[1]]
@@ -63,7 +61,6 @@ if (genotype_conf$build == "hg38"){
   setnames(mapLDref, "pos", "pos_hg37")
   setnames(mapLDref, "pos_hg38", "pos")
 }
-
 
 #---- Match with LDref ----
 df_beta_good <- snp_match(df_beta, mapLDref, match.min.prop = 0)

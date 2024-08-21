@@ -25,10 +25,6 @@ geno_file <- snakemake@input[["genotype_rds"]]
 pheno <- snakemake@wildcards[["pheno"]]
 genotype_conf <- snakemake@params[["genotype_conf"]]
 
-# Remove following lines for local run/debug
-# ldfiles <- list.files("ld_ref", pattern="ld_chr")
-# ldfiles <- file.path("ld_ref", ldfiles)
-print(ldfiles)
 
 # Output
 heritability_file <- snakemake@output[[1]]
@@ -38,8 +34,6 @@ df_beta_good_rds <- snakemake@output[[4]]
 beta_grid_file <- snakemake@output[[5]]
 pred_grid_file <- snakemake@output[[6]]
 params_grid_file <- snakemake@output[[7]]
-
-print(genotype_conf$build)
 
 #---- Resources ----
 NCORES <- snakemake@threads

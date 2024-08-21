@@ -26,7 +26,7 @@ if (gwas_conf[["header"]] == TRUE){
     } else if (is.character(col_dict) & col_dict != ""){
         # Column definition provided by formatbook through predefined formats
         format_names <- jsonlite::read_json(file.path(res_dir, "formatbook", "formatbook.json"))
-        format_names <- format_names[col_dict]
+        format_names <- format_names[[col_dict]][["format_dict"]]
     } else {
       stop(glue("Please provide a column schema for GWAS: {infile}"))
     }
@@ -46,10 +46,12 @@ if (is.character(col_dict)){ # & col_dict == "auto"){
 #---- Set names ----
 # 1. Names to GWAS lab standard
 if (!is.null(format_names)){
-  setnames(gwas_data, names(format_names), as.character(format_names))
+  setnames(gwas_data, names(format_names), as.character(format_names), skip_absent = TRUE)
 }
 # 2. From GWASlab to bigsnpr
-setnames(gwas_data, names(fmt_2_R), as.character(fmt_2_R))
+setnames(gwas_data, names(fmt_2_R), as.character(fmt_2_R), skip_absent = TRUE)
+
+# TODO: Add filter for Minor allele frequency
 
 #---- Save RDS ----
 saveRDS(gwas_data, file=outfile)

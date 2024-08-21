@@ -20,11 +20,5 @@
     },
     "header": true,
     "trait_type": "quantitative"
-  },
-  "PD_GWASCATALOG": {
-    "path": "/home/michele/work/prs_pipeline/data/GCST009325.h.tsv.gz",
-    "format": "gwascatalog",
-    "header": true,
-    "trait_type": "binary"
   }
 }

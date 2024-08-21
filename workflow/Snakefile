@@ -36,7 +36,3 @@ rule all:
 rule all_plots:
   input:
     target_rule_plots()
-
-rule gwas_rds:
-  input:
-    target_rule_preproc()

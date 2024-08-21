@@ -15,6 +15,11 @@ odir = os.path.join(config["output_dir"], "{pheno}")
 data_dir = config["data_dir"]
 geno_dir = os.path.join(data_dir, "geno")
 
+# Create directory if they do not exists
+# os.makedirs(config["output_dir", exist_ok=True)
+# os.makedirs(data_dir, exist_ok=True)
+# os.makedirs(geno_dir, exist_ok=True)
+
 # Create resource directory and check existence
 resource_dir = config["cache_dir"]
 if not os.path.isdir(resource_dir):
