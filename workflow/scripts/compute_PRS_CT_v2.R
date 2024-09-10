@@ -125,7 +125,7 @@ cat("Creating betas and logs...", "\n")
 beta <- rep(NA, ncol(G))
 beta[info_snp[!is_bad,]$`_NUM_ID_`] <- info_snp[!is_bad,]$beta
 lpval <- rep(NA, ncol(G))
-lpval[info_snp[!is_bad,]$`_NUM_ID_`] <- -log10(info_snp[!is_bad,]$p)
+lpval[info_snp[!is_bad,]$`_NUM_ID_`] <- -log10(info_snp[!is_bad,]$p_value)
 
 t1 <- Sys.time()
 #---- Clumping optimizer ----

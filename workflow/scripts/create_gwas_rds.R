@@ -51,6 +51,17 @@ if (!is.null(format_names)){
 # 2. From GWASlab to bigsnpr
 setnames(gwas_data, names(fmt_2_R), as.character(fmt_2_R), skip_absent = TRUE)
 
+#---- Change chromosome name if genome_build is hg38 ----
+# Column: chr
+#         "chr1" -> "1"
+# Plink do not use chr in front of the chromosome code
+if (gwas_conf$genome_build == "hg38"){
+  gwas_data[, chr:=as.character(chr)]
+  ck_chrom <- grepl("chr\\d{1,2}", gwas_data$chr, perl=TRUE)
+  gwas_data[ck_chrom, chr:=sub("chr", "", chr)]
+  gwas_data[, chr:=as.integer(chr)]
+}
+
 # TODO: Add filter for Minor allele frequency
 
 # TODO: Compute column P of p-values when only log10p is provided and the opposite
@@ -58,8 +69,9 @@ setnames(gwas_data, names(fmt_2_R), as.character(fmt_2_R), skip_absent = TRUE)
 # TODO: Add n_eff when binary phenotype is available and N_Cases and N_Controls are available
 # dirty solution provided here based on https://privefl.github.io/bigsnpr/articles/LDpred2.html,
 # something better should be provided...
-if (any(names(gwas) == "n_eff")){
-  gwas_data[, n_eff:=quantile(8 / beta_se^2, 0.999)]
+if (!any(names(gwas_data) == "n_eff")){
+  n <- quantile(8 / gwas_data$beta_se^2, 0.999)
+  gwas_data[, n_eff:=n]
 }
 
 #---- Save RDS ----
