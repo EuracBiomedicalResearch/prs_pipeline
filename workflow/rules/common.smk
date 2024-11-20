@@ -2,6 +2,7 @@ import json
 import os
 import itertools as it
 from snakemake.utils import validate
+from snakemake.logging import logger
 
 # Validate the config file
 validate(config, schema="../schemas/config.schema.yaml")
@@ -25,15 +26,18 @@ resource_dir = config["cache_dir"]
 if not os.path.isdir(resource_dir):
   resource_dir = "resources"
 
-
 # GWAS configuration
 jsonfile = config["gwas_manifest"]
 gwases = json.load(open(jsonfile, "r"))
 gwas_traits = gwases.keys()
 
 # Validate GWAS
+# Check build
 for k, v in gwases.items():
   validate(v, schema="../schemas/gwas_manifest.schema.yaml")
+  if v["genome_build"] != genotype_conf["build"]:
+    raise TypeError("Different genome build between gwas and genotypes. Consider lifting over one of the datasets")
+
 
 # Create path for rsid file
 rsidfilevar = os.path.join(resource_dir, "rsid", f"rsids-v154-{genotype_conf['build']}.index.gz")
@@ -99,7 +103,6 @@ def get_ldblk_url(wildcards):
 def get_ldblk_zip():
   # lddata = config["ld_data"].lower()
   # ldpop = config["ld_population"].lower()
-  nchroms = genotype_conf["nchrom"]
   
   mydir = os.path.join(resource_dir, "ldblk_{data}_{population}.tar.gz")
   return mydir.format(**{"data":lddata, "population": ldpop})
@@ -107,11 +110,11 @@ def get_ldblk_zip():
 def get_ldblk_files():
   # lddata = config["ld_data"].lower()
   # ldpop = config["ld_population"].lower()
-  nchroms = genotype_conf["nchrom"]
+  # nchroms = genotype_conf["nchrom"]
   
   mydir = os.path.join(resource_dir, "ldblk_{data}_{population}", "ldblk_{data}_chr{chrom}.hdf5")
   return expand(mydir, data=[lddata], population=[ldpop], 
-                chrom=range(1, nchroms + 1))   
+                chrom=range(1, 22))   
 
 def get_ldblk_dir():
   # lddata = config["ld_data"].lower()
@@ -186,6 +189,9 @@ def target_rule_plots():
 
 def get_formatbooks():
   return os.path.join(resource_dir, "formatbook", "formatbook.json")
+
+def lift_ld_ref():
+  return os.path.join(get_ldblk_dir(), f"snpinfo_{lddata}_hm3_hg38")
 
 
 # # PRS-CS

@@ -3,7 +3,7 @@
 #---- Libraries ----
 library(dplyr)
 library(glue)
-library(bigsnpr, lib.loc = "/home/mfilosi/R/rocker-rstudio/4.2")
+library(bigsnpr)
 
 Sys.setenv(OPENBLAS_NUM_THREADS=1)
 

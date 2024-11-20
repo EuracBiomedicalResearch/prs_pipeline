@@ -112,3 +112,14 @@ rule get_ld_ref_prscs:
     tar -zxvf {params.odir} -C resources
     """
 
+rule lift_reference:
+  message:
+    "Lift LD reference for PRScs"
+  input:
+    snp_info = os.path.join(get_ldblk_dir(), f"snpinfo{{lddata}}_hm3")
+  output:
+    snp_info_out = os.path.join(get_ldblk_dir(), f"snpinfo{{lddata}}_hm3_hg38")
+  conda:
+    "../envs/prscs.yaml"
+  script:
+    "../scripts/lift_ld_ref.py"

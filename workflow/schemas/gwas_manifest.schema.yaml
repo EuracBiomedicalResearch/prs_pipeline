@@ -22,8 +22,12 @@ properties:
     type: string
     description: Type of GWAS trait (quantitative or binary).
 
+  genome_build:
+    type: string
+    description: Human genome build
 
 required:
   - path
   - trait_type
   - header
+  - genome_build

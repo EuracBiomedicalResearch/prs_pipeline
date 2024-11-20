@@ -67,11 +67,12 @@ rule write_genotype_mergelist:
   output:
       os.path.join(geno_dir, 'merge_list_all.txt')
   run:
-      with open(output[0], 'w') as f:
-          for i in input:
-              if i.endswith(".bed"):
-                  fi = i.replace(".bed", "")
-                  f.write(fi + "\n")
+    print("Holaaaa")
+    with open(output[0], 'w') as f:
+        for i in input:
+            if i.endswith(".bed"):
+                fi = i.replace(".bed", "")
+                f.write(fi + "\n")
 
 rule merge_all_genotypes:
   input:
@@ -262,7 +263,8 @@ rule get_ld_ref_mat:
   output:
     hm3_mat = protected(hm3corr)
   params:
-    zipfile = hm3zip
+    zipfile = hm3zip,
+    outpath = hm3matout
   resources:
     mem_mb = 8000
   shell:
@@ -271,8 +273,7 @@ rule get_ld_ref_mat:
     then
       gdown -O {params.zipfile} https://drive.google.com/uc?id=17dyKGA2PZjMsivlYb_AjDmuZjM1RIGvs
     fi
-    # unzip {output.hm3_mat} -d resources/ld_ref/ldref_hm3_plus
-    unzip {params.zipfile} -d resources/ld_ref/ldref_hm3_plus
+    unzip {params.zipfile} -d {params.outpath}
     """
 
 rule get_gwas_formats:

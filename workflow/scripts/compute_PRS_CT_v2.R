@@ -131,7 +131,7 @@ t1 <- Sys.time()
 #---- Clumping optimizer ----
 clump_res_file <- snakemake@output[["clump_opt"]]
 if (file.exists(clump_res_file) & force==FALSE){
-  cat("Found clumping file, reading...\n")  
+  cat("Found clumping file, reading...\n")
   clump_res <- readRDS(clump_res_file)
 } else {
   cat("Start clumping...\n")
