@@ -15,7 +15,6 @@ col_dict <- gwas_conf[["format"]]
 # fmt_2_R <- jsonlite::read_json(file.path(res_dir, "formatbook_to_R.json"))$format
 fmt_2_R <- jsonlite::read_json(file.path("workflow", "scripts", "formatbook_to_R.json"))$format
 
-
 #---- Check if names of the columns are available ----
 if (gwas_conf[["header"]] == TRUE){
   if (is.null(col_dict)){
