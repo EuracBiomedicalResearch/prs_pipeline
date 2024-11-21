@@ -25,7 +25,7 @@ gwas_manifest: ".test/gwas_PD_hg38.json"
 # - Available dataset: 1KG or UKBB
 ld_reference:
   population: "eur"
-  data: "1KG"
+  data: "1kg"
 
 # Cache directory for resources:
 cache_dir: "resources"
@@ -37,6 +37,6 @@ prs_algorithms:
   lassosum2:
     activate: true
   prscs:
-    activate: false
+    activate: true
   sct:
     activate: true

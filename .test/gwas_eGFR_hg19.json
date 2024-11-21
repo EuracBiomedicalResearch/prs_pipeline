@@ -19,6 +19,7 @@
       }
     },
     "header": true,
-    "trait_type": "quantitative"
+    "trait_type": "quantitative",
+    "genome_build": "hg19"
   }
 }
