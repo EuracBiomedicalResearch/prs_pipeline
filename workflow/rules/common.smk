@@ -2,7 +2,7 @@ import json
 import os
 import itertools as it
 from snakemake.utils import validate
-from snakemake.logging import logger
+from snakemake.rules import expand
 
 # Validate the config file
 validate(config, schema="../schemas/config.schema.yaml")
@@ -61,8 +61,17 @@ def add_plink_ext(infile):
   return {k: infile + f".{k}" for k in myext}
 
 def get_reference(wildcards):
-  if genotype_conf["nchrom"] == 1:
-    ref_files = genotype_conf["plinkfiles"]["1"]
+  # if genotype_conf["nchrom"] == 1:
+  #   ref_files = genotype_conf["plinkfiles"]["1"]
+  # else:
+  file_format = genotype_conf["format"]
+  if genotype_conf["divided_by_chrom"]:
+    if file_format == "plink":
+      ref_files = genotype_conf["files"][wildcards.chrom]
+    elif file_format == "vcf":
+      ref_files = genotype_conf["files"][wildcards.chrom]
+      ref_files = os.path.basename(ref_files).replace("vcf.gz", "")
+      ref_files = os.path.join("tmp-data/geno", ref_files)
   else:
     ref_files = genotype_conf["plinkfiles"][wildcards.chrom]
 
@@ -72,9 +81,8 @@ def get_reference(wildcards):
 # Get files to combine
 def get_all_ref(wildcards):
   flist = []
-  for i, e in it.product(range(genotype_conf["nchrom"]), 
-                         [".bed", ".bim", ".fam"]):
-    chrom = i + 1
+  nchrom = genotype_conf["nchrom"]
+  for i, e in it.product(range(nchrom), [".bed", ".bim", ".fam"]):
     flist.append(os.path.join(geno_dir, "qc_geno_chr{chrom}{e}"))
 
   nchrom = genotype_conf["nchrom"]
@@ -166,7 +174,7 @@ def target_rule_prs():
   output_files = []
   for k, v in config["prs_algorithms"].items():
     try:
-      # print(v["activate"])
+      # print(v["activgcate"])
       if v["activate"]:
         alg_path = os.path.join(odir, k.lower())
         preds = expand(os.path.join(alg_path, "prs{ext}"),

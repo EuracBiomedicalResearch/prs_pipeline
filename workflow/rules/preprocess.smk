@@ -16,6 +16,16 @@ wildcard_constraints:
 #     zcat {input} | grep -v -e "#" | cut -f 1-8 > {output}
 #     """
 
+# TODO: create rule to divide genotype into chromosomes
+# rule divide_by_chrom:
+#   input:
+#     genotype_conf["divided_by_chrom"]
+#   output:
+#     bed='tmp-data/geno/qc_geno_chr{chrom}.bed',
+#     bim='data/geno/qc_geno_chr{chrom}.bim',
+#     fam='data/geno/qc_geno_chr{chrom}.fam'
+#
+
 rule create_snplist:
   input:
     mafr2 = os.path.join(geno_dir, 'qc', 'chr{chrom}_maf_r2.txt')
