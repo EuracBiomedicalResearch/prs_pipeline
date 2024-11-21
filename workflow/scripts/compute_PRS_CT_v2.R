@@ -119,6 +119,10 @@ sd_ss <- sd_ss / quantile(sd_ss, 0.99) * sqrt(0.5)
 is_bad <- 
   sd_ss < (0.7 * sd_ldref) | sd_ss > (sd_ldref + 0.1) | sd_ss < 0.1 | sd_ldref < 0.05
 
+# Check if there is no effects to estimate
+if (length(is_bad) == 0){
+  is_bad <- rep(FALSE, nrow(info_snp))
+}
 
 #---- Create Beta and LogP vector ----
 cat("Creating betas and logs...", "\n")
