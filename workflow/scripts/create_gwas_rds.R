@@ -12,7 +12,9 @@ res_dir <- snakemake@params[["res_dir"]]
 col_dict <- gwas_conf[["format"]]
 
 # Read name translation from `GWASlab/formatbooks` to `bigsnpr`
-fmt_2_R <- jsonlite::read_json(file.path(res_dir, "formatbook_to_R.json"))$format
+# fmt_2_R <- jsonlite::read_json(file.path(res_dir, "formatbook_to_R.json"))$format
+fmt_2_R <- jsonlite::read_json("formatbook_to_R.json")$format
+
 
 #---- Check if names of the columns are available ----
 if (gwas_conf[["header"]] == TRUE){
