@@ -9,6 +9,8 @@
     "N": "n_eff",
     "BETA": "beta",
     "SE": "beta_se",
-    "P": "p"
+    "P": "p",
+    "rsid": "id",
+    "SNPID": "snpid"
   }
 }

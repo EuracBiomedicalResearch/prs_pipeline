@@ -9,7 +9,7 @@ rule gwas_for_prscs:
   output:
     gwas_prscs = os.path.join(odir, "gwas_prscs.csv")
   resources:
-    mem_mb=16000
+    mem_mb = 16000
   conda:
     "../envs/bigsnpr.yaml"
   script:
@@ -52,7 +52,7 @@ rule run_prscs:
     "../envs/prscs.yaml"
   shell:
     """
-    PRScs.py \
+    PRScs \
     --ref_dir={params.prefixld} \
     --bim_prefix={params.prefixbim} \
     --sst_file={input.gwas_prscs} \
@@ -80,11 +80,15 @@ rule predict_prscs:
     bim = expand(os.path.join(geno_dir, "qc_geno_chr{chrom}_rsid.bim"), 
                  chrom=range(1, genotype_conf["nchrom"] + 1)),
     beta_shrinked = os.path.join(odir, "prscs/beta_all.txt"),
-    genotype_rds = os.path.join(geno_dir, "qc_geno_all.rds")
+    genotype_rds = os.path.join(geno_dir, "qc_geno_all.rds"),
   output:
     pred_file = os.path.join(odir, "prscs/prs.rds"),
     pred_csv = os.path.join(odir, "prscs/prs.csv"),
-    map_file = os.path.join(odir, "prscs/map_prs.rds")
+    map_file = os.path.join(odir, "prscs/map_prs.rds"),
+  params: 
+    gwas_conf = lookup("{pheno}", within=gwases),
+    ld_dir = get_ldblk_dir(),
+    lddata = lddata
   resources:
     mem_mb=12000
   conda:

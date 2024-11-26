@@ -1,8 +1,8 @@
 import json
 
-jsonfile = config["gwas_manifest"]
-gwases = json.load(open(jsonfile, "r"))
-gwas_traits = gwases.keys()
+# jsonfile = config["gwas_manifest"]
+# gwases = json.load(open(jsonfile, "r"))
+# gwas_traits = gwases.keys()
 
 rule create_gwas_rds:
   message: 
