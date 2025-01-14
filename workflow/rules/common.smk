@@ -65,27 +65,29 @@ def get_reference(wildcards):
   # if genotype_conf["nchrom"] == 1:
   #   ref_files = genotype_conf["plinkfiles"]["1"]
   # else:
-  file_format = genotype_conf["format"]
-  if genotype_conf["divided_by_chrom"]:
-    if file_format == "plink":
-      ref_files = genotype_conf["files"][wildcards.chrom]
-    elif file_format == "vcf":
-      ref_files = genotype_conf["files"][wildcards.chrom]
-      ref_files = os.path.basename(ref_files).replace("vcf.gz", "")
-      ref_files = os.path.join("tmp-data/geno", ref_files)
-  else:
-    ref_files = genotype_conf["plinkfiles"][wildcards.chrom]
-
+  # file_format = genotype_conf["format"]
+  # if genotype_conf["divided_by_chrom"]:
+  #   if file_format == "plink":
+  #     ref_files = genotype_conf["files"][wildcards.chrom]
+  #   elif file_format == "vcf":
+  #     ref_files = genotype_conf["files"][wildcards.chrom]
+  #     ref_files = os.path.basename(ref_files).replace("vcf.gz", "")
+  #     ref_files = os.path.join("tmp-data/geno", ref_files)
+  # else:
+  #   ref_files = genotype_conf["files"][wildcards.chrom]
+  ref_files = os.path.join(geno_dir, "geno_chr{chrom}")
   out_dict = add_plink_ext(ref_files)
   return out_dict
 
+def get_reference2(wildcards):
+  nchrom = 22
+  flist = expand(os.path.join(geno_dir, "qc_geno_chr{chrom}{ext}"), chrom=range(1, nchrom + 1), 
+               ext=[".bed", ".bim", ".fam"])
+  return flist
+
+
 # Get files to combine
 def get_all_ref(wildcards):
-  flist = []
-  nchrom = genotype_conf["nchrom"]
-  for i, e in it.product(range(nchrom), [".bed", ".bim", ".fam"]):
-    flist.append(os.path.join(geno_dir, "qc_geno_chr{chrom}{e}"))
-
   nchrom = genotype_conf["nchrom"]
   flist = expand(os.path.join(geno_dir, "qc_geno_chr{chrom}{ext}"), chrom=range(1, nchrom + 1), 
                 ext=[".bed", ".bim", ".fam"])
@@ -148,7 +150,8 @@ def target_rule_preproc():
 
 
 def expand_chrom(myfile):
-  return expand(myfile, chrom=range(1, genotype_conf["nchrom"] + 1))
+  myfile_masked = myfile.replace("pheno", "{pheno}")
+  return expand(myfile_masked, chrom=range(1, 23))
 
 
 def target_rule_preproc_bychr():
@@ -175,16 +178,15 @@ def target_rule_prs():
   output_files = []
   for k, v in config["prs_algorithms"].items():
     try:
-      # print(v["activgcate"])
       if v["activate"]:
         alg_path = os.path.join(odir, k.lower())
         preds = expand(os.path.join(alg_path, "prs{ext}"),
                       pheno=gwas_traits, ext=[".rds", ".csv"])
         output_files.extend(preds)
-        if k != "sct":
-          maps = expand(os.path.join(alg_path, "map_prs.rds"),
-                        pheno=gwas_traits)
-          output_files.extend(maps)
+        # if k != "sct":
+        #   maps = expand(os.path.join(alg_path, "map_prs.rds"),
+        #                 pheno=gwas_traits)
+        #   output_files.extend(maps)
     except KeyError:
       pass
   return output_files
@@ -201,6 +203,15 @@ def get_formatbooks():
 
 def lift_ld_ref():
   return os.path.join(get_ldblk_dir(), f"snpinfo_{lddata}_hm3_hg38")
+
+# def tmp_ld():
+#   alg = "lassosum2"
+#   alg_path = os.path.join(odir, alg)
+#   ff = expand(os.path.join(alg_path, "beta_auto_chr{chrom}_ldpred2.rds"), 
+#   chrom=range(1,23), 
+#   pheno=gwas_traits)
+#   print(ff)
+#   return ff
 
 
 # # PRS-CS

@@ -17,14 +17,17 @@ wildcard_constraints:
 #     """
 
 # TODO: create rule to divide genotype into chromosomes
-# rule divide_by_chrom:
-#   input:
-#     genotype_conf["divided_by_chrom"]
-#   output:
-#     bed='tmp-data/geno/qc_geno_chr{chrom}.bed',
-#     bim='data/geno/qc_geno_chr{chrom}.bim',
-#     fam='data/geno/qc_geno_chr{chrom}.fam'
-#
+rule divide_by_chrom:
+  output:
+    bed = os.path.join(geno_dir, 'geno_chr{chrom}.bed'),
+    bim = os.path.join(geno_dir, 'geno_chr{chrom}.bim'),
+    fam = os.path.join(geno_dir, 'geno_chr{chrom}.fam')
+  conda:
+    '../envs/plink.yaml'
+  params:
+    genotype_conf = genotype_conf
+  script:
+    '../scripts/divide_by_chrom.py'
 
 rule create_snplist:
   input:
@@ -73,11 +76,11 @@ rule genotype_QC:
 rule write_genotype_mergelist:
   message: "Create plink merge list"
   input:
-      get_all_ref
+      # get_all_ref
+      get_reference2
   output:
       os.path.join(geno_dir, 'merge_list_all.txt')
   run:
-    print("Holaaaa")
     with open(output[0], 'w') as f:
         for i in input:
             if i.endswith(".bed"):
@@ -102,6 +105,28 @@ rule merge_all_genotypes:
   script:
     "../scripts/plink_merge.py"
 
+
+rule import_geno_into_r_bychr:
+  message:
+    "Import genotype datya into R using bigsnpr structure"
+  input:
+    bed = ancient(os.path.join(geno_dir, "qc_geno_chr{chrom}.bed")),
+    bim = ancient(os.path.join(geno_dir, "qc_geno_chr{chrom}.bim")),
+    fam = ancient(os.path.join(geno_dir, "qc_geno_chr{chrom}.fam"))
+  output:
+    os.path.join(geno_dir, "qc_geno_chr{chrom}.rds"),
+    os.path.join(geno_dir, "qc_geno_chr{chrom}.bk"),
+    os.path.join(geno_dir, "qc_geno_chr{chrom}_map.rds")
+  threads: 16 
+  resources: 
+    mem_mb = 64000,
+    tmpdir = "tmp-data"
+  conda:
+    "../envs/bigsnpr.yaml"
+  script:
+    "../scripts/load_genotype_all.R"
+
+
 rule import_genotype_into_r:
   message:
     "Import genotype datya into R using bigsnpr structure"
@@ -124,9 +149,9 @@ rule import_genotype_into_r:
 
 rule compute_distance:
   input:
-    mapfile = os.path.join(geno_dir, "qc_geno_all_map.rds")
+    mapfile = os.path.join(geno_dir, "qc_geno_chr{chrom}_map.rds")
   output:
-    os.path.join(geno_dir, "qc_geno_all_map_gendist.rds")
+    os.path.join(geno_dir, "qc_geno_chr{chrom}_map_gendist.rds")
   threads: 12
   resources:
     mem_mb = 32000,

@@ -37,6 +37,8 @@ prs_algorithms:
   lassosum2:
     activate: true
   prscs:
-    activate: true
+    activate: false
   sct:
-    activate: true
+    activate: false
+  sbayesr:
+    activate: false

@@ -3,7 +3,7 @@
   "nchrom": 22,
   "format": "plink",
   "build": "hg19",
-  "plinkfiles": {
+  "files": {
     "1": "data/public-data3/public-data3_chr1",
     "2": "data/public-data3/public-data3_chr2",
     "3": "data/public-data3/public-data3_chr3",
