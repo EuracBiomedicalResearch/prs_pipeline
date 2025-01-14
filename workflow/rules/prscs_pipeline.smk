@@ -1,8 +1,3 @@
-# rule all_p:
-#   input:
-#     pred_file = "results/{pheno}/prscs/pred_prscs.rds",
-#     map_file = "results/{pheno}/prscs/map_prscs.rds"
-
 rule gwas_for_prscs:
   input:
     gwas_rds = os.path.join(odir, "gwas.rds")
@@ -25,13 +20,12 @@ rule annotate_bim:
     "../envs/bcftools.yaml"
   resources:
     mem_mb = 8000
-  # shell:
-  #   """
-  #   python scripts/reannotate_bim_files.py {input.bim} {input.rsidfile} --chrom {wildcards.chrom} --out {output.bim_anno}
-  #   """
   script:
     "../scripts/reannotate_bim_files_2.py"
 
+# TODO: When a single chromosome is provided PRS-CS 
+# expect the input should divided by chromosomes. The chrom argument 
+# to the function should be provided
 rule run_prscs:
   input:
     gwas_prscs = os.path.join(odir, "gwas_prscs.csv"),
@@ -57,8 +51,8 @@ rule run_prscs:
     --bim_prefix={params.prefixbim} \
     --sst_file={input.gwas_prscs} \
     --n_gwas=500000 \
-    --chrom={wildcards.chrom} \
-    --out_dir={params.prefixout}
+    --out_dir={params.prefixout} \
+    --chrom={wildcards.chrom}
     """
 
 rule move_and_collect:
