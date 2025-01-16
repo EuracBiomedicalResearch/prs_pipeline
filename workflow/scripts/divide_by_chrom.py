@@ -3,6 +3,7 @@ import os
 import shutil
 import json
 
+
 def main(genotype_conf, chrom, ofile):
     """This function will separate the genetic data into chromosomes
     """
@@ -10,14 +11,14 @@ def main(genotype_conf, chrom, ofile):
         shutil.copy(genotype_conf["files"][chrom], ofile)
     else:
         print(genotype_conf["files"]["1"])
-        sb.run(["plink",  "--bfile", 
-                genotype_conf["files"]["1"], 
+        sb.run(["plink",  "--bfile",
+                genotype_conf["files"]["1"],
                 "--chr", str(chrom),
                 "--make-bed",
                 "--out", ofile]
-                )
-        
-          
+               )
+
+
 if __name__ == "__main__":
     genotype_conf = snakemake.params.genotype_conf
     ofile = snakemake.output.bed

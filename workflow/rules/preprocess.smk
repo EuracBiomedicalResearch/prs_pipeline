@@ -16,7 +16,6 @@ wildcard_constraints:
 #     zcat {input} | grep -v -e "#" | cut -f 1-8 > {output}
 #     """
 
-# TODO: create rule to divide genotype into chromosomes
 rule divide_by_chrom:
   output:
     bed = os.path.join(geno_dir, 'geno_chr{chrom}.bed'),

@@ -33,7 +33,6 @@ gwas_traits = gwases.keys()
 
 # Validate GWAS
 # Check build
-# TODO: create a configuration file to test different build between genome and GWAS sumstat
 for k, v in gwases.items():
   validate(v, schema="../schemas/gwas_manifest.schema.yaml")
   if v["genome_build"] != genotype_conf["build"]:
