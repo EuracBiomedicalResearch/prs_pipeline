@@ -40,3 +40,5 @@ prs_algorithms:
     activate: true
   sct:
     activate: true
+  sbayesr:
+    activate: false

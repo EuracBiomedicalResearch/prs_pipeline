@@ -59,18 +59,21 @@ t1 <- Sys.time()
 cat(glue("Variant frequency computed in {format(t1 -t2)}"), "\n")
 
 #---- Re-read the plink files with selected genotypes ----
-if (file.exists(glue("{ofilebk}.bk"))){
-  cat("Removing file bk..\n`")
-  file.remove(glue("{ofilebk}.bk"))
-}
-ix <- which(freq > 0.01 & freq < 0.99)
-geno <- snp_readBed2(bed, backingfile = ofilebk, ind.col = ix, ncores=ncores)
-cat(glue("Read from the plink files second time.."), "\n")
+# if (file.exists(glue("{ofilebk}.bk"))){
+#   cat("Removing file bk..\n`")
+#   file.remove(glue("{ofilebk}.bk"))
+# }
+
+# TODO: Add filtering if filter on frequency is added as parameter in conf file
+# Do I have to load the genotype the second time after filtering?
+# ix <- which(freq > 0.01 & freq < 0.99)
+# geno <- snp_readBed2(bed, backingfile = ofilebk, ind.col = ix, ncores=ncores)
+# cat(glue("Read from the plink files second time.."), "\n")
 
 #---- Saving map files after filtering ----
-cat("Saving map file after filtering...\n")
-saveRDS(map[ix, ], file=mapfile)
-
+cat("Saving map file with frequency...\n")
+saveRDS(map, file=mapfile)
+cat("Done!")
 #---- Update Genotypes ----
 # cat("Select only variants with freq higher than 0.01\n")
 # ix <- which(freq > 0.01 & freq < 0.99)

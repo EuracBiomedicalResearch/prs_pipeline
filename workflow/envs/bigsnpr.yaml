@@ -14,3 +14,4 @@ dependencies:
   - r-jsonlite
   - r-dplyr
   - r-R.utils
+  - r-tidyr
