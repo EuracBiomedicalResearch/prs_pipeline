@@ -1,4 +1,4 @@
-import glob
+import os
 
 wildcard_constraints:
   chrom=r"\d+"
@@ -16,11 +16,23 @@ wildcard_constraints:
 #     zcat {input} | grep -v -e "#" | cut -f 1-8 > {output}
 #     """
 
+rule divide_by_chrom:
+  output:
+    bed = os.path.join(geno_dir, 'geno_chr{chrom}.bed'),
+    bim = os.path.join(geno_dir, 'geno_chr{chrom}.bim'),
+    fam = os.path.join(geno_dir, 'geno_chr{chrom}.fam')
+  conda:
+    '../envs/plink.yaml'
+  params:
+    genotype_conf = genotype_conf
+  script:
+    '../scripts/divide_by_chrom.py'
+
 rule create_snplist:
   input:
-    mafr2 = 'data/geno/qc/chr{chrom}_maf_r2.txt'
+    mafr2 = os.path.join(geno_dir, 'qc', 'chr{chrom}_maf_r2.txt')
   output:
-    snplist = 'data/geno/qc/snplist_chr{chrom}.txt'
+    snplist = os.path.join(geno_dir, 'qc', 'snplist_chr{chrom}.txt')
   resources:
     mem_mb = 8000
   threads: 1
@@ -30,14 +42,13 @@ rule create_snplist:
   script:
     'scripts/create_snplist.py'
 
-# TODO: Add split in chromosomes if only 1 plink file is passed
 rule genotype_QC:
   input: 
-    unpack(get_reference),
+    unpack(get_reference)
   output:
-    bed='data/geno/qc_geno_chr{chrom}.bed',
-    bim='data/geno/qc_geno_chr{chrom}.bim',
-    fam='data/geno/qc_geno_chr{chrom}.fam'
+    bed = os.path.join(geno_dir, 'qc_geno_chr{chrom}.bed'),
+    bim = os.path.join(geno_dir, 'qc_geno_chr{chrom}.bim'),
+    fam = os.path.join(geno_dir, 'qc_geno_chr{chrom}.fam')
   params:
     prefixi = lambda wildcards, input: input.bed.replace(".bed", ""),
     prefixo = lambda wildcards, output: output.bed.replace(".bed", ""),
@@ -64,23 +75,24 @@ rule genotype_QC:
 rule write_genotype_mergelist:
   message: "Create plink merge list"
   input:
-      get_all_ref
+      # get_all_ref
+      get_reference2
   output:
-      'merge_list_all.txt'
+      os.path.join(geno_dir, 'merge_list_all.txt')
   run:
-      with open(output[0], 'w') as f:
-          for i in input:
-              if i.endswith(".bed"):
-                  fi = i.replace(".bed", "")
-                  f.write(fi + "\n")
+    with open(output[0], 'w') as f:
+        for i in input:
+            if i.endswith(".bed"):
+                fi = i.replace(".bed", "")
+                f.write(fi + "\n")
 
 rule merge_all_genotypes:
   input:
-    'merge_list_all.txt'
+    rules.write_genotype_mergelist.output #'merge_list_all.txt'
   output:
-    bed = "data/geno/qc_geno_chrall.bed",
-    bim = "data/geno/qc_geno_chrall.bim",
-    fam = "data/geno/qc_geno_chrall.fam"
+    bed = os.path.join(geno_dir, "qc_geno_chrall.bed"),
+    bim = os.path.join(geno_dir, "qc_geno_chrall.bim"),
+    fam = os.path.join(geno_dir, "qc_geno_chrall.fam")
   params:
     prefixo=lambda wildcards, output: output.bed.replace('.bed', '')
   message:
@@ -89,35 +101,56 @@ rule merge_all_genotypes:
     mem_mb=72000
   conda:
     "../envs/plink.yaml"
-  shell:
-    'plink --merge-list {input} --memory {resources.mem_mb} --make-bed --out {params.prefixo}'
+  script:
+    "../scripts/plink_merge.py"
+
+
+rule import_geno_into_r_bychr:
+  message:
+    "Import genotype datya into R using bigsnpr structure"
+  input:
+    bed = ancient(os.path.join(geno_dir, "qc_geno_chr{chrom}.bed")),
+    bim = ancient(os.path.join(geno_dir, "qc_geno_chr{chrom}.bim")),
+    fam = ancient(os.path.join(geno_dir, "qc_geno_chr{chrom}.fam"))
+  output:
+    os.path.join(geno_dir, "qc_geno_chr{chrom}.rds"),
+    os.path.join(geno_dir, "qc_geno_chr{chrom}.bk"),
+    os.path.join(geno_dir, "qc_geno_chr{chrom}_map.rds")
+  threads: 16 
+  resources: 
+    mem_mb = 64000,
+    tmpdir = "tmp-data"
+  conda:
+    "../envs/bigsnpr.yaml"
+  script:
+    "../scripts/load_genotype_all.R"
 
 
 rule import_genotype_into_r:
   message:
     "Import genotype datya into R using bigsnpr structure"
   input:
-    bed = ancient("data/geno/qc_geno_chrall.bed"),
-    bim = ancient("data/geno/qc_geno_chrall.bim"),
-    fam = ancient("data/geno/qc_geno_chrall.fam")
+    bed = ancient(os.path.join(geno_dir, "qc_geno_chrall.bed")),
+    bim = ancient(os.path.join(geno_dir, "qc_geno_chrall.bim")),
+    fam = ancient(os.path.join(geno_dir, "qc_geno_chrall.fam"))
   output:
-    'data/geno/qc_geno_all.rds',
-    'data/geno/qc_geno_all.bk',
-    'data/geno/qc_geno_all_map.rds'
+    os.path.join(geno_dir, "qc_geno_all.rds"),
+    os.path.join(geno_dir, "qc_geno_all.bk"),
+    os.path.join(geno_dir, "qc_geno_all_map.rds")
   threads: 16 
   resources: 
     mem_mb = 64000,
-    tmpdir = 'tmp-data'
+    tmpdir = "tmp-data"
   conda:
     "../envs/bigsnpr.yaml"
   script:
-    '../scripts/load_genotype_all.R'
+    "../scripts/load_genotype_all.R"
 
 rule compute_distance:
   input:
-    mapfile = "data/geno/qc_geno_all_map.rds"
+    mapfile = os.path.join(geno_dir, "qc_geno_chr{chrom}_map.rds")
   output:
-    "data/geno/qc_geno_all_map_gendist.rds"
+    os.path.join(geno_dir, "qc_geno_chr{chrom}_map_gendist.rds")
   threads: 12
   resources:
     mem_mb = 32000,
@@ -164,11 +197,11 @@ rule compute_distance:
 
 rule qc_plot:
   input:
-    map_rds = "data/geno/qc_geno_all_map.rds",
-    gwas_rds = "data/gwas/{pheno}_overall.rds"
+    map_rds = os.path.join(geno_dir, "qc_geno_all_map.rds"),
+    gwas_rds = os.path.join(data_dir, "gwas", "{pheno}_overall.rds")
   output:
-    plot_file = "results/{pheno}/bad_variants.png",
-    plot_file2 = "results/{pheno}/beta_distribution.png"
+    plot_file = os.path.join(odir, "bad_variants.png"),
+    plot_file2 = os.path.join(odir, "beta_distribution.png")
   resources:
     mem_mb=24000
   conda:
@@ -233,14 +266,20 @@ rule get_rsid:
   output:
     rsid_file = protected(rsidfilevar)
   params:
-    rsfile = lambda wildcards, output: os.path.basename(output.rsid_file).replace("index.gz", "tsv.gz")
+    rsfile = lambda wildcards, output: os.path.basename(output.rsid_file).replace("index.gz", "tsv.gz"),
+    resource_dir = resource_dir
+  conda:
+    "../envs/bcftools.yaml"
   resources:
     mem_mb=8000
   shell:
     """
-    wget -O resources/{params.rsfile} https://resources.pheweb.org/{params.rsfile} 
+    if [ ! -f {params.resource_dir}/{params.rsfile} ]
+    then
+      wget -O {params.resource_dir}/{params.rsfile} https://resources.pheweb.org/{params.rsfile}
+    fi
     echo -e "CHROM\tPOS\tRSID\tREF\tALT" | bgzip -c > {output.rsid_file}
-    zcat resources/{params.rsfile} | bgzip -c >> {output.rsid_file}
+    zcat {params.resource_dir}/{params.rsfile} | bgzip -c >> {output.rsid_file}
     tabix -s1 -b2 -e2 -S1 {output.rsid_file}
     """
 
@@ -249,7 +288,7 @@ rule get_ld_ref:
     hm3plus = protected(hm3map)
   shell:
     """
-    wget -O {output.hm3} https://figshare.com/ndownloader/files/37802721
+    wget -O {output.hm3plus} https://figshare.com/ndownloader/files/37802721
     """
 
 rule get_ld_ref_mat:
@@ -258,12 +297,25 @@ rule get_ld_ref_mat:
   output:
     hm3_mat = protected(hm3corr)
   params:
-    zipfile ="resources/ld_ref/ldref_hm3_plus.zip" 
+    zipfile = hm3zip,
+    outpath = hm3matout
   resources:
-    mem_mb=8000
+    mem_mb = 8000
   shell:
     """
-    gdown -O {params.zipfile} https://drive.google.com/uc?id=17dyKGA2PZjMsivlYb_AjDmuZjM1RIGvs
-    unzip {output.hm3_mat} -d resources/ld_ref/ldref_hm3_plus
+    if [ ! -f {params.zipfile} ]
+    then
+      gdown -O {params.zipfile} https://drive.google.com/uc?id=17dyKGA2PZjMsivlYb_AjDmuZjM1RIGvs
+    fi
+    unzip {params.zipfile} -d {params.outpath}
     """
 
+rule get_gwas_formats:
+  output:
+    protected(get_formatbooks())
+  params:
+    resource_dir= resource_dir
+  shell:
+    """
+    git clone https://github.com/Cloufield/formatbook.git {params.resource_dir}/formatbook
+    """

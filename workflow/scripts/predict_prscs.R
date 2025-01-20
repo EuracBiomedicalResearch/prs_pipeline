@@ -19,6 +19,13 @@ geno_file <- snakemake@input[["genotype_rds"]]
 map_file <- snakemake@output[["map_file"]]
 pred_file <- snakemake@output[["pred_file"]]
 pred_csv <- snakemake@output[["pred_csv"]]
+# Params
+ld_dir <- snakemake@params[["ld_dir"]]
+lddata <- snakemake@params[["lddata"]]
+gwas_conf <- snakemake@params[["gwas_conf"]]
+
+#---- Read genome build for the GWAS ----
+gwas_build = gwas_conf[["genome_build"]]
 
 # -----------------------------------------------------
 # Uncomment the following lines if 
@@ -46,6 +53,15 @@ setorder(bimdf, chr, pos)
 #---- Read in beta file ----
 betas <- data.table::fread(beta_file, header=FALSE, 
                            col.names=c("chr", "id", "pos", "a0", "a1", "beta"))
+
+# If build is 38 need to adjust position according to the SNPinfo file
+if (gwas_build == "hg38"){
+  snpinfo <- data.table::fread(file.path(ld_dir, paste0("snpinfo_", lddata, "_hm3_hg38")))
+  snpinfo <- snpinfo[, -c("CHR", "A1", "A2", "MAF")]
+  betas <- merge(betas, snpinfo, by.x="id", by.y="SNP", sort=FALSE)
+  betas <- betas[, -"pos"]
+  setnames(betas, "BP", "pos")
+}
 
 # bimdf[, betas:=NA]
 # bimdf_betas <- merge(bimdf, betas, by=c("CHROM", "RSID", "BP", "A0", "A1"))

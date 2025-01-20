@@ -1,10 +1,9 @@
 channels:
+  - defaults
   - conda-forge
   - bioconda
   - nodefaults
 dependencies:
-  - pandas
-  - numpy
-  - pip
-  - gdown
-  - unzip
+  - samtools
+  - bcftools
+  - tabix

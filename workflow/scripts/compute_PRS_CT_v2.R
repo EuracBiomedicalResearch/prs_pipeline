@@ -4,10 +4,8 @@ library(stringr)
 library(ggplot2)
 library(forcats)
 library(glue)
-library(bigsnpr)#, lib.loc = "/home/mfilosi/R/rocker-rstudio/4.2")
+library(bigsnpr)
 library(rmio)
-
-#/shared/bioinf/R/bin/Rscript-4.3-BioC3.17
 
 # Avoid nested parallel computation...
 Sys.setenv(OPENBLAS_NUM_THREADS=1)
@@ -22,7 +20,6 @@ cat(glue('Force parameter {force}'), "\n")
 #---- Input/Output ----
 genofiles <- snakemake@input[["geno_data"]]
 mapfile <- snakemake@input[["map_data"]]
-trainfile <- snakemake@input[["train_data"]]
 gwasfile <- snakemake@input[["gwas_data"]]
 
 pred_rds <- snakemake@output[["pred_rds"]]
@@ -30,23 +27,13 @@ pred_csv <- snakemake@output[["pred_csv"]]
 
 cat(glue("Genotype file: {genofiles}"), "\n")
 cat(glue("Mapfile: {mapfile}"), "\n")
-cat(glue("trainfile: {trainfile}"), "\n")
 cat(glue("gwasfile: {gwasfile}"), "\n")
 
 
 #---- Setup ----
-# proj_path <- "/scratch/mfilosi/CKDgenPRS"
-# data_path <- file.path(proj_path, "data")
-# geno_path <- file.path(proj_path, "plinkFiles")
-# tmp_path <- file.path(proj_path, "tmp-data")
-
 # Multi-cpu computing
 NCORES <- as.integer(snakemake@threads)
 cat(glue("Computation on {NCORES} cpus.\n"))
-
-#---- Get phenotypes and training data ----
-# train_data <- readRDS(file.path(data_path, "train_pheno_file.rds"))
-# train_data <- readRDS(trainfile)
 
 t1 <- Sys.time()
 #---- Load Genotypes ----
@@ -72,35 +59,7 @@ fam_info <- fam_info %>% mutate(
   sample.ID=str_pad(sample.ID, width=10, side="left", pad=0)
 )
 
-#---- Subset train data and genotype data ----
-# ixsamp <- match(fam_info$sample.ID, train_data$AID)
-
-# NB create `ixtrain` object that contains the samples ID corresponding the the
-# genotype file for the sample ID available in the phenotype
-# If all samples are found in the phenotype and genotype `ixtrain` is equal to 
-# all rows in the genotype file, otherwise will be subsetted.
-# The model fitting require the phenotypes to be **already** subsetted matching 
-# the genotype sample order!
-# if (sum(is.na(ixsamp)) > 0){
-#   ixtrain <- which(!is.na(ixsamp))
-#   train_data <- train_data[ixsamp[!is.na(ixsamp)],]
-# } else {
-#   ixtrain <- 1:length(ixsamp)
-#   train_data <- train_data[ixsamp,]
-# }
-
-#---- Phenotype to train ----
-# y <- train_data %>% dplyr::pull(eGFR1)
-# Rescale phenotype
-# yscaled <- scale(y, center=TRUE, scale=1)
-
-#---- Create covariates ----
-# covariates <- train_data %>% 
-#   dplyr::select(sex, age, starts_with("PC"))
-# cov_mat <- covar_from_df(covariates)
-
 #---- Load GWAS ----
-# gwas_data <- readRDS(file.path(data_path, "19-Dec-22_MW_eGFR_overall_EA_subtracted_CHRIS5K.rds"))
 gwas_data <- readRDS(gwasfile)
 
 #---- Match SNPs ----
@@ -111,14 +70,19 @@ gwas_data <- readRDS(gwasfile)
 info_snp <- snp_match(gwas_data, map_snp)
 
 # TODO: Need to add choice if it's binary or quantitative trait
-sd_ldref <- sqrt(2* map_snp[info_snp$`_NUM_ID_`, "freq"] * (1 - map_snp[info_snp$`_NUM_ID_`, "freq"]))
-sd_trait_est <- quantile(sqrt(0.5 * (info_snp$n_eff * info_snp$beta_se**2) + info_snp$beta**2), probs=0.99)
-sd_ss <- 1 / sqrt(info_snp$n_eff * info_snp$beta_se**2 + info_snp$beta**2)
-sd_ss <- sd_ss / quantile(sd_ss, 0.99) * sqrt(0.5)
+# sd_ldref <- sqrt(2* map_snp[info_snp$`_NUM_ID_`, "freq"] * (1 - map_snp[info_snp$`_NUM_ID_`, "freq"]))
+# sd_trait_est <- quantile(sqrt(0.5 * (info_snp$n_eff * info_snp$beta_se**2) + info_snp$beta**2), probs=0.99)
+# sd_ss <- 1 / sqrt(info_snp$n_eff * info_snp$beta_se**2 + info_snp$beta**2)
+# sd_ss <- sd_ss / quantile(sd_ss, 0.99) * sqrt(0.5)
 
-is_bad <- 
-  sd_ss < (0.7 * sd_ldref) | sd_ss > (sd_ldref + 0.1) | sd_ss < 0.1 | sd_ldref < 0.05
+# is_bad <- 
+#   sd_ss < (0.7 * sd_ldref) | sd_ss > (sd_ldref + 0.1) | sd_ss < 0.1 | sd_ldref < 0.05
 
+
+# Check if there is no effects to estimate
+# if (length(is_bad) == 0){
+is_bad <- rep(FALSE, nrow(info_snp))
+# }
 
 #---- Create Beta and LogP vector ----
 cat("Creating betas and logs...", "\n")
@@ -130,18 +94,18 @@ lpval[info_snp[!is_bad,]$`_NUM_ID_`] <- -log10(info_snp[!is_bad,]$p)
 t1 <- Sys.time()
 #---- Clumping optimizer ----
 clump_res_file <- snakemake@output[["clump_opt"]]
-if (file.exists(clump_res_file) & force==FALSE){
-  cat("Found clumping file, reading...\n")  
+if (file.exists(clump_res_file) & force == FALSE){
+  cat("Found clumping file, reading...\n")
   clump_res <- readRDS(clump_res_file)
 } else {
   cat("Start clumping...\n")
   clump_res <- snp_grid_clumping(
     G, 
-    infos.chr = map_snp$chr, 
+    infos.chr = map_snp$chr,
     infos.pos = map_snp$pos,
     lpS = lpval,
     exclude = which(is.na(lpval)),
-    ncores=NCORES)
+    ncores = NCORES)
     #ind.row = ixtrain)
   saveRDS(clump_res, file=clump_res_file)
   t2 <- Sys.time()
@@ -150,24 +114,24 @@ if (file.exists(clump_res_file) & force==FALSE){
 
 t1 <- Sys.time()
 #---- Thresholding ----
+# TODO: add pvalue threshold as parameter
 multi_prs_file <- snakemake@output[["multi_prs"]]
 multi_prsbk_file <- snakemake@output[["multi_prs_bk"]]
 if (file.exists(multi_prs_file) & force == FALSE){
-  cat("Found thresholding file, reading...\n")  
-  multi_PRS <- readRDS(multi_prs_file)  
+  cat("Found thresholding file, reading...\n")
+  multi_PRS <- readRDS(multi_prs_file)
 } else {
   if (file.exists(multi_prsbk_file)){
     file.remove(multi_prsbk_file)
   }
   cat("Start thresholding...\n")
   multi_PRS <- snp_grid_PRS(
-    G, 
-    all_keep = clump_res, 
-    betas=beta, 
-    lpS=lpval, 
-    # ind.row = ixtrain,
-    backingfile = sub(".rds", "", multi_prs_file), 
-    n_thr_lpS = 10, 
+    G,
+    all_keep = clump_res,
+    betas = beta,
+    lpS = lpval,
+    backingfile = sub(".rds", "", multi_prs_file),
+    n_thr_lpS = 10,
     ncores = NCORES)
   t2 <- Sys.time()
   cat("Thresholding optimiziation done in ", t2 - t1, " sec.\n")
@@ -185,16 +149,20 @@ grids <- attr(all_keep, "grid")
 ngrids <- nrow(grids)
 n_thr <- length(lpS_thr)
 nparams <- ngrids * n_thr
-nchroms <- 22
+# nchroms <- 22
 
-pred_mat <- matrix(0, ncol=nparams, nrow=nrow(multi_PRS))
+pred_mat <- matrix(0, ncol = nparams, nrow = nrow(multi_PRS))
 for (i in seq(1, nparams)){
-  ind.col <- seq(i, length.out=nchroms, by=nparams)
-  pred_mat[, i] <- rowSums(multi_PRS[, ind.col])
+  ind.col <- seq(i, length.out = 1, by = nparams)
+  # pred_mat[, i] <- rowSums(multi_PRS[, ind.col])
+  pred_mat[, i] <- multi_PRS[, ind.col]
 }
 pred_mat <- as.data.frame(pred_mat)
-pred_mat <- cbind(familyID=geno_data$fam$family.ID, sampleID=geno_data$fam$sample.ID, pred_mat)
+pred_mat <- cbind(familyID=geno_data$fam$family.ID,
+sampleID=geno_data$fam$sample.ID, pred_mat)
+
 saveRDS(pred_mat, file=pred_rds)
+
 write.table(pred_mat, file=pred_csv, sep="\t", row.names = FALSE, col.names = TRUE, quote=FALSE)
 t1 <- Sys.time()
 
@@ -220,7 +188,7 @@ t1 <- Sys.time()
 # }
 
 cat("Quitting...\n")
-q(save="no")
+q(save = "no")
 
 #---- Prediction ----
 newbeta <- final_mod$beta.G

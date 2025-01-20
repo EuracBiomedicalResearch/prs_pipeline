@@ -6,7 +6,6 @@ min_version("8.4.8")
 # Config file
 configfile: "config/config.yaml"
 
-
 # Setup singularity
 # container: "docker://continuumio/miniconda3"
 # container: "docker://mambaorg/micromamba"
@@ -18,19 +17,20 @@ conda:
 # Load rules
 include: "rules/common.smk"
 include: "rules/preprocess.smk"
-include: "rules/sct_pipeline.smk"
+include: "rules/sct_pipeline_chrom.smk"
 include: "rules/prscs_pipeline.smk"
-include: "rules/ldpred2_pipeline.smk"
+include: "rules/ldpred2_pipeline_chrom.smk"
 include: "rules/gwas.smk"
 
 # Target rule
 rule all:
   input:
-    target_rule_preproc(), 
-    # target_rule_preproc_bychr(),
+    # target_rule_preproc(), 
+    target_rule_preproc_bychr(),
     # "data/geno/qc_geno_all_map_gendist.rds",
     target_rule_gwas(),
-    target_rule_prs()
+    target_rule_prs(),
+    lift_ld_ref()
     # **target_rule_prscs(),
     # **target_rule_ldpred2()
     # **target_rule_sct()

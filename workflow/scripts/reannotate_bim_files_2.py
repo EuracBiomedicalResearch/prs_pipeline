@@ -1,8 +1,6 @@
-import os
 import subprocess as sb
-import numpy as np
-import pandas as pd
 import itertools as it
+import pandas as pd
 
 
 def main(bimfile, rsidfile, chrom, outfile="out_annot.bim"):
@@ -23,18 +21,19 @@ def main(bimfile, rsidfile, chrom, outfile="out_annot.bim"):
                                           sep="\t")
     # Run tabix
     f = open(tabixtmp, "w")
-    proc_out = sb.run(["tabix", rsidfile, "-R", bimdf], stdout=f)
+    proc_out = sb.run(["tabix", rsidfile, "-R", bimtmp],
+                      stdout=f, text=True)
     f.close()
 
     if proc_out.returncode == 0:
-        regions_rsids = pd.read_csv(tabixtmp, header=False,
-                                    columns=["CHROM", "POS", "RSID",
-                                             "A0", "A1"])
+        regions_rsids = pd.read_csv(tabixtmp, header=0, sep="\t",
+                                    names=["CHROM", "POS", "RSID", "A0", "A1"])
+    else:
+        raise IOError(f"No such file or directory {tabixtmp}!")
+    
     # Output file
     bimoutfile = outfile
     bimout = open(bimoutfile, 'w')
-
-    # rsid = ['' for i in range(bimdf.shape[0])]
 
     for j, r in enumerate(bimdf.iterrows()):
         pp = r[1]['POS']
@@ -58,6 +57,9 @@ def main(bimfile, rsidfile, chrom, outfile="out_annot.bim"):
 
 
 def compare_alleles(bim, anno):
+    """Function to compare alleles eventually 
+    allowing reverse strand and flipping
+    """
     bima0 = bim[1]['A0']
     bima1 = bim[1]['A1']
     for a in anno:
@@ -69,16 +71,21 @@ def compare_alleles(bim, anno):
 
 
 if __name__ == '__main__':
-    import argparse
+    # import argparse
+    #
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument("bimfile")
+    # parser.add_argument("rsidfile")
+    # parser.add_argument("--chrom", type=int, default=22)
+    # parser.add_argument("--out", default="out_annot.bim")
+    #
+    # args = parser.parse_args()
+    #
+    # main(bimfile=args.bimfile, rsidfile=args.rsidfile, chrom=args.chrom,
+    #      outfile=args.out)
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("bimfile")
-    parser.add_argument("rsidfile")
-    parser.add_argument("--chrom", type=int, default=22)
-    parser.add_argument("--out", default="out_annot.bim")
-
-    args = parser.parse_args()
-
-    main(bimfile=args.bimfile, rsidfile=args.rsidfile, chrom=args.chrom,
-         outfile=args.out)
-
+    bimfile = snakemake.input.bim
+    rsidfile = snakemake.input.rsidfile
+    chrom = snakemake.wildcards.chrom
+    outfile = snakemake.output.bim_anno
+    main(bimfile=bimfile, rsidfile=rsidfile, chrom=chrom, outfile=outfile)

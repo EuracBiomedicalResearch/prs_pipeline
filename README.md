@@ -45,8 +45,10 @@ The `json` file should contain the following entries:
 
 GWAS analysis can be done using a variety of methods, and can be obtained from custom analysis or from 
 databases such as [GWAS catalog](https://www.ebi.ac.uk/gwas/).
-To support different file specification we use a manifest file in `json` format. Multiple gwases can 
-be included in the same manifest file, then the PRS will be computed on each GWAS provided.
+To support different file specification we use a manifest file in `json` format.
+Definition of the columns in the GWAS summary stats can be defined using the formats available in the 
+[formatbook](https://github.com/Cloufield/FormatBook) github repository. We use the same json schema to define column
+names. Multiple gwases can be included in the same manifest file, then the PRS will be computed on each GWAS provided.
 You can find and example of this file in the `config` directory:
 [config/gwas.json](config/gwas.json) and in the `schema` file
 [here](workflow/schemas/gwas_manifest.schema.json)

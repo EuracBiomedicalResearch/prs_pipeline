@@ -1,0 +1,25 @@
+{
+  "PD_GWASCATALOG": {
+    "path": "/home/michele/work/prs_pipeline/data/GCST009325.h.tsv.gz",
+    "format": {
+      "meta_data": {
+        "format_name": "custom"
+      },
+      "format_dict": {
+        "chromosome": "CHR",
+        "base_pair_location": "POS",
+        "rsid": "rsID",
+        "other_allele": "NEA",
+        "effect_allele": "EA",
+        "effect_allele_frequency": "EAF",
+        "beta": "BETA",
+        "standard_error": "SE",
+        "p_value":  "P",
+        "N_cases": "N"
+      }
+    },
+    "header": true,
+    "trait_type": "binary",
+    "genome_build": "hg38"
+  }
+}

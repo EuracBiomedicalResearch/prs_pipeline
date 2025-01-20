@@ -1,0 +1,16 @@
+{
+  "format": {
+    "CHR": "chr",
+    "POS": "pos",
+    "rsID": "id",
+    "NEA": "a0",
+    "EA": "a1",
+    "EAF": "freq",
+    "N": "n_eff",
+    "BETA": "beta",
+    "SE": "beta_se",
+    "P": "p",
+    "rsid": "id",
+    "SNPID": "snpid"
+  }
+}

@@ -4,7 +4,11 @@ channels:
   - bioconda
   - nodefaults
 dependencies:
-  - prscs=1.1.0
+  # - prscs=1.1.0
   - scipy=1.11
   - h5py
   - numpy
+  - liftover
+  - pip
+  - pip:
+    - git+https://github.com/filosi/PRScs.git@feature/package

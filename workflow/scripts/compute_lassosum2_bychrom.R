@@ -16,16 +16,16 @@ map_rds <- snakemake@input[["map_rds"]]
 gwas_rds <- snakemake@input[["gwas_rds"]]
 map_ld_rds <- snakemake@input[["map_ld_rds"]]
 corfiles <- snakemake@input[["corfiles"]]
-# corfiles <- glue("resources/ld_ref/ldref_hm3_plus/LD_with_blocks_chr{chrom}.rds", chrom=1:22)
 geno_file <- snakemake@input[["genotype_rds"]]
 pheno <- snakemake@wildcards[["pheno"]]
 genotype_conf <- snakemake@params[["genotype_conf"]]
-
+chrom <- snakemake@wildcards[["chrom"]]
 
 # Output
-beta_file <- snakemake@output[[1]]
-df_beta_good_rds <- snakemake@output[[2]]
-params_grid_file <- snakemake@output[[3]]
+beta_file <- snakemake@output[["beta_file"]]
+df_beta_good_rds <- snakemake@output[["df_beta"]]
+params_grid_file <- snakemake@output[["params_file"]]
+pred_file <- snakemake@output[["pred_file"]]
 
 #---- Resources ----
 NCORES <- snakemake@threads
@@ -120,34 +120,23 @@ df_beta_good <- as.data.table(df_beta_good)
 tmp <- tempfile(tmpdir = tmpdir)
 corr <- NULL
 t1 <- Sys.time()
-for (mychr in 1:22){
-  tc1 <- Sys.time()
-  cat(mychr, ".. ", sep = "")
-  ix <- df_beta_good[chr == mychr, `_NUM_ID_`]
-  
-  # retrieve indexes relative to the correlation matrix positions
-  ix2 <- match(ix, which(mapLDref$chr == mychr))
-  
-  # Get correlation file
-  fi <- grepl(glue("chr{mychr}.rds"), corfiles)
-  ff <- corfiles[fi]
-  
-  cat("read matrix...\n")
-  corr_chr <- readRDS(ff)[ix2, ix2]
-  
-  if (is.null(corr)) {
-    corr <- as_SFBM(corr_chr, tmp, compact = TRUE)
-  } else {
-    corr$add_columns(corr_chr, nrow(corr))
-  }
-  tc2 <- Sys.time()
-  cat(glue("Chromosome {mychr} computed in: {format(tc2-tc1)}"), "\n")
-}
+cat(chrom, ".. ", sep = "")
+ix <- df_beta_good[chr == chrom, `_NUM_ID_`]
+
+# retrieve indexes relative to the correlation matrix positions
+ix2 <- match(ix, which(mapLDref$chr == chrom))
+
+# Get correlation file
+# fi <- grepl(glue("chr{mychr}.rds"), corfiles)
+ff <- corfiles
+
+cat("read matrix...\n")
+corr_chr <- readRDS(ff)[ix2, ix2]
+
+corr <- as_SFBM(corr_chr, tmp, compact = TRUE)
+
 t2 <- Sys.time()
 cat(glue("Compute correlation in {format(t2-t1)}...\n"))
-
-#---- Export df_beta_good for future computation ----
-saveRDS(df_beta_good, file=df_beta_good_rds)
 
 #---- Compute lassosum2 betas ----
 cat("Computing beta with lassosum2...")
@@ -158,5 +147,20 @@ cat(glue("in {format(t2 - t1)}"), "\n Saving...\n")
 saveRDS(beta_lassosum2, file=beta_file)
 
 #---- Lassosum2 parameters ----
-(params2 <- attr(beta_lassosum2, "grid_param"))
+params2 <- attr(beta_lassosum2, "grid_param")
 saveRDS(params2, file=params_grid_file)
+
+#---- Compute predictions ----
+setnames(df_beta_good, "_NUM_ID_.ss", "_NUM_ID_.geno_chrom")
+pred <- big_prodMat(G, beta_lassosum2, ind.col = df_beta_good[["_NUM_ID_.geno_chrom"]])
+colnames(pred) <- paste0("p", seq(1, nrow(params2)))
+
+#---- Write prediction ----
+cat("Saving prediction for lassosum2\n")
+pred_grid_df <- data.table(geno$fam)
+pred_grid_df <- cbind(pred_grid_df, pred)
+saveRDS(pred_grid_df, file=pred_file)
+
+#---- Export df_beta_good for future computation ----
+cat("Saving df_beta_good\n")
+saveRDS(df_beta_good, file=df_beta_good_rds)

@@ -23,11 +23,8 @@ ldfiles <- snakemake@input[["ldfiles"]]
 corfiles <- snakemake@input[["corfiles"]]
 geno_file <- snakemake@input[["genotype_rds"]]
 pheno <- snakemake@wildcards[["pheno"]]
+genotype_conf <- snakemake@params[["genotype_conf"]]
 
-# Remove following lines for local run/debug
-# ldfiles <- list.files("ld_ref", pattern="ld_chr")
-# ldfiles <- file.path("ld_ref", ldfiles)
-print(ldfiles)
 
 # Output
 heritability_file <- snakemake@output[[1]]
@@ -58,10 +55,17 @@ gwas <- readRDS(gwas_rds)
 #---- Merge with local genotypes ----
 cat("Merging snps...\n")
 df_beta <- snp_match(gwas, map)
-# df_beta <- as.data.table(df_beta)
+names(df_beta)[which(names(df_beta) == "_NUM_ID_.ss")] <- "_NUM_ID_.SUMSTAT"
+# df_beta <- as.data.table(df_beta
 
 #---- Load LDref file ----
 mapLDref <- readRDS(map_ld_rds)
+
+# Handle hg38 LDreference from bigsnpr
+if (genotype_conf$build == "hg38"){
+  setnames(mapLDref, "pos", "pos_hg37")
+  setnames(mapLDref, "pos_hg38", "pos")
+}
 
 #---- Match with LDref ----
 df_beta_good <- snp_match(df_beta, mapLDref, match.min.prop = 0)
@@ -239,23 +243,28 @@ if (file.exists(model_file)){
                                  vec_p_init = seq_log(1e-4, 0.9, length.out = 10),
                                  allow_jump_sign = FALSE, shrink_corr = 0.95,
                                  ncores = NCORES) # 5 min
-  # multi_auto <- snp_ldpred2_auto(corr, df_beta_good, h2_init = h2_est,
-  #                                vec_p_init = seq_log(1e-4, 0.9, length.out = 30),
-  #                                allow_jump_sign = FALSE, shrink_corr = 0.5, use_MLE = FALSE,
-  #                                burn_in = 500, num_iter = 500,
-  #                                ncores = NCORES, ind.corr=df_beta_good$`_NUM_ID_`) # 
   t2 <- Sys.time()
   cat(glue("LDpred model run in {format(t2-t1)}"),"\n")
   cat(glue("Saving {model_file}..."), "\n")
   saveRDS(multi_auto, file=model_file)
 }
 
-system(glue("touch {beta_file}"))
+range <- sapply(multi_auto, function(auto) diff(range(auto$corr_est)))
+keep <- which(range > (0.95 * quantile(range, 0.95, na.rm = TRUE)))
 
-# LDpred2 - grid
+if (length(keep) == 0){
+  keep <- 1:length(multi_auto)
+}
+beta_auto <- rowMeans(sapply(multi_auto[keep], function(auto) auto$beta_est))
+
+# Save beta for the LDPred auto model
+saveRDS(beta_auto, file=beta_file)
+
+#---- LDpred2 - grid ----
 cat("Running ldpred2-grid model\n")
 # (h2_seq <- round(h2_est * c(0.3, 0.7, 1, 1.4), 4))
 (h2_seq <- round(h2_est * c(0.01, 0.3, 0.7, 1, 1.4, 2), 4))
+h2_seq <- h2_seq[h2_seq > 0]
 (p_seq <- signif(seq_log(1e-5, 1, length.out = 10), 2))
 (params <- expand.grid(p = p_seq, h2 = h2_seq, sparse = c(FALSE, TRUE)))
 saveRDS(params, file=params_grid_file)
@@ -263,13 +272,15 @@ saveRDS(params, file=params_grid_file)
 beta_grid <- snp_ldpred2_grid(corr, df_beta_good, params, ncores = NCORES)#, ind.corr = df_beta_good$`_NUM_ID_`)
 saveRDS(beta_grid, file=beta_grid_file)
 
-pred_grid <- big_prodMat(G, beta_grid, ind.col = df_beta_good[["_NUM_ID_"]])
+# TODO: move the prediction into another script
+pred_grid <- big_prodMat(G, beta_grid, ind.col = df_beta_good[["_NUM_ID_.ss"]])
 saveRDS(pred_grid, file=pred_grid_file)
 
 # Quit
 quit(save="no")
 
 #---- Lassosum2 computation ----
+# This has been moved into another script!
 cat("Computing beta with lassosum2...")
 t1 <- Sys.time()
 beta_lassosum2 <- snp_lassosum2(corr, df_beta_good, ncores = NCORES)

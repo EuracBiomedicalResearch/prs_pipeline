@@ -1,8 +1,5 @@
 $schema: "http://json-schema.org/draft-06/schema#"
-
 description: Snakemake configuration file for running prs pipeline
-
-type: object
 
 properties:
   output_dir:

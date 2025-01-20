@@ -1,15 +1,10 @@
-# rule all_p:
-#   input:
-#     pred_file = "results/{pheno}/prscs/pred_prscs.rds",
-#     map_file = "results/{pheno}/prscs/map_prscs.rds"
-
 rule gwas_for_prscs:
   input:
     gwas_rds = os.path.join(odir, "gwas.rds")
   output:
     gwas_prscs = os.path.join(odir, "gwas_prscs.csv")
   resources:
-    mem_mb=16000
+    mem_mb = 16000
   conda:
     "../envs/bigsnpr.yaml"
   script:
@@ -21,13 +16,16 @@ rule annotate_bim:
     rsidfile = ancient(rsidfilevar)
   output:
     bim_anno = os.path.join(geno_dir, "qc_geno_chr{chrom}_rsid.bim"),
+  conda:
+    "../envs/bcftools.yaml"
   resources:
     mem_mb = 8000
-  shell:
-    """
-    python workflow/scripts/reannotate_bim_files.py {input.bim} {input.rsidfile} --chrom {wildcards.chrom} --out {output.bim_anno}
-    """
+  script:
+    "../scripts/reannotate_bim_files_2.py"
 
+# TODO: When a single chromosome is provided PRS-CS 
+# expect the input should divided by chromosomes. The chrom argument 
+# to the function should be provided
 rule run_prscs:
   input:
     gwas_prscs = os.path.join(odir, "gwas_prscs.csv"),
@@ -48,13 +46,13 @@ rule run_prscs:
     "../envs/prscs.yaml"
   shell:
     """
-    PRScs.py \
+    PRScs \
     --ref_dir={params.prefixld} \
     --bim_prefix={params.prefixbim} \
     --sst_file={input.gwas_prscs} \
     --n_gwas=500000 \
-    --chrom={wildcards.chrom} \
-    --out_dir={params.prefixout}
+    --out_dir={params.prefixout} \
+    --chrom={wildcards.chrom}
     """
 
 rule move_and_collect:
@@ -76,11 +74,15 @@ rule predict_prscs:
     bim = expand(os.path.join(geno_dir, "qc_geno_chr{chrom}_rsid.bim"), 
                  chrom=range(1, genotype_conf["nchrom"] + 1)),
     beta_shrinked = os.path.join(odir, "prscs/beta_all.txt"),
-    genotype_rds = os.path.join(geno_dir, "qc_geno_all.rds")
+    genotype_rds = os.path.join(geno_dir, "qc_geno_all.rds"),
   output:
     pred_file = os.path.join(odir, "prscs/prs.rds"),
     pred_csv = os.path.join(odir, "prscs/prs.csv"),
-    map_file = os.path.join(odir, "prscs/map_prs.rds")
+    map_file = os.path.join(odir, "prscs/map_prs.rds"),
+  params: 
+    gwas_conf = lookup("{pheno}", within=gwases),
+    ld_dir = get_ldblk_dir(),
+    lddata = lddata
   resources:
     mem_mb=12000
   conda:
@@ -101,10 +103,21 @@ rule get_ld_ref_prscs:
     mem_mb=12000
   shell:
     """
-    if [ -f {params.odir} ];
+    if [ ! -f {params.odir} ];
     then
       wget -O {params.odir} {params.url}
     fi
     tar -zxvf {params.odir} -C resources
     """
 
+rule lift_reference:
+  message:
+    "Lift LD reference for PRScs"
+  input:
+    snp_info = os.path.join(get_ldblk_dir(), f"snpinfo{{lddata}}_hm3")
+  output:
+    snp_info_out = os.path.join(get_ldblk_dir(), f"snpinfo{{lddata}}_hm3_hg38")
+  conda:
+    "../envs/prscs.yaml"
+  script:
+    "../scripts/lift_ld_ref.py"

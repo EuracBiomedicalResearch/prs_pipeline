@@ -5,8 +5,8 @@
 .snakemake*
 
 # Results and data
-data/*
-results/*
+data*
+results*
 resources/*
 rsid*
 genetic_data.json
@@ -19,3 +19,14 @@ genetic_data.json
 # resources and tmp-data
 resource*
 tmp-data*
+
+# RData
+*.RData
+*.Rhistory
+*history
+
+# VScode
+.vscode/*
+*.code-workspace
+tasks/*
+

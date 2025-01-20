@@ -17,10 +17,16 @@ properties:
     description: Genotype build, possible values are (hg19 or hg38)
     default: hg19
 
-  plinkfiles:
+  format:
+    type: string
+    description: Genotype file format
+    default: plink
+
+  files:
     type: object
 
-  required:
-    - build
-    - nchrom
-    - plinkfiles
+required:
+  - build
+  - nchrom
+  - files
+  - format
