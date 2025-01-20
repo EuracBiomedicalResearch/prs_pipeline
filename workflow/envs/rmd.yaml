@@ -1,0 +1,18 @@
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - r-stringr =1.5
+  - r-forcats
+  - r-data.table
+  - r-ggplot2
+  - r-glue
+  - r-rmio
+  - r-jsonlite
+  - r-dplyr
+  - r-R.utils
+  - r-tidyr
+  - r-DT
+  - r-kableextra
+  - r-rmarkdown
