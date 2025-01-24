@@ -172,22 +172,34 @@ def target_rule_sct():
 def target_rule_gwas():
   return expand(os.path.join(odir, "gwas.rds"), pheno=gwas_traits)
 
+# Get algorithm activated
+def get_algs():
+  """This function returns the activate algorithms
+  """
+  algs = []
+  for k,v in config["prs_algorithms"].items():
+    try:
+      if v["activate"]:
+        algs.append(k.lower())
+    except KeyError:
+      pass
+  return algs
+
+
 # Define target rule for computing the PRSs
 def target_rule_prs():
   output_files = []
-  for k, v in config["prs_algorithms"].items():
-    try:
-      if v["activate"]:
-        alg_path = os.path.join(odir, k.lower())
-        preds = expand(os.path.join(alg_path, "prs{ext}"),
-                      pheno=gwas_traits, ext=[".rds", ".csv"])
-        output_files.extend(preds)
+  algs = get_algs()
+  # for k, v in config["prs_algorithms"].items():
+  for k in algs:
+      alg_path = os.path.join(odir, k.lower())
+      preds = expand(os.path.join(alg_path, "prs{ext}"),
+                    pheno=gwas_traits, ext=[".rds", ".csv"])
+      output_files.extend(preds)
         # if k != "sct":
         #   maps = expand(os.path.join(alg_path, "map_prs.rds"),
         #                 pheno=gwas_traits)
         #   output_files.extend(maps)
-    except KeyError:
-      pass
   return output_files
 
 
@@ -196,6 +208,14 @@ def target_rule_plots():
   expand(os.path.join(odir, "beta_distribution.png"), pheno=gwas_traits)]
   return ofiles
  
+# def target_rule_report():
+#   algs = get_algs()
+#   alg_path = [os.path.join(odir, a) for a in algs]
+#   # output_files = [os.path.join(pp, "report.html" for pp in alg_path)]
+#   output_files = [os.path.join(pp, "plot.svg" for pp in alg_path)]
+
+#   return output_files
+
 
 def get_formatbooks():
   return os.path.join(resource_dir, "formatbook", "formatbook.json")
