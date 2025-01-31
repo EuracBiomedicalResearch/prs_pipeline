@@ -43,13 +43,19 @@ opts <- options(knitr.kable.NA = "", knitr.duplicate.label = "allow")
 ```
 
 ```{r read_parameters, eval=FALSE, include=FALSE}
+prs_rds <- snakemake@input[["pred_rds"]]
+map_rds <- snakamake@input[["map_prs.rds"]]
+```
 
+```{r}
+basedir <- "/home/michele/work/prs_pipeline/results_hg38/PD_GWASCATALOG/lassosum2"
+prs_rds <- file.path(basedir, "prs.rds")
 ```
 
 # Polygenic Risk Score analysis
 
-```{r cars}
-summary(cars)
+```{r}
+prs_df <- readRDS(prs_rds)
 ```
 
 ## Including Plots

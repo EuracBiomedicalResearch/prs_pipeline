@@ -33,7 +33,7 @@ NCORES <- snakemake@threads
 # This function converts to numeric and set NA to 0
 to_double <- function(x){
     y <- as.numeric(x)
-    y[!is.na(y)] <- 0
+    y[is.na(y)] <- 0
     return(y)
 }
 
@@ -44,7 +44,7 @@ for (rr in beta_auto_file){
     if (i == 1){
         prs <- to_double(df$PRS)
     } else {
-        prs <- prs + to_double(df$PRS)
+      prs <- prs + to_double(df$PRS)
     }
     i <- i + 1
 }
