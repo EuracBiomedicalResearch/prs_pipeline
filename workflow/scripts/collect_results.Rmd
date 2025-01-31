@@ -1,0 +1,69 @@
+---
+title: "Polygenic Risk Score analysis"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    theme: cerulean
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: yes
+    code_folding: hide
+    code_download: yes
+    df_print: kable
+link-citations: yes
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+#---- Libraries ----
+library(dplyr)
+library(stringr)
+library(ggplot2)
+library(forcats)
+library(glue)
+library(kableExtra)
+library(tidyr)
+library(DT)
+
+knitr::opts_chunk$set(cache = FALSE, 
+                      concordance = TRUE, 
+                      prompt = FALSE, 
+                      # fig.width=5, 
+                      # fig.height=5, 
+                      out.width = "100%", 
+                      echo = FALSE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      error = FALSE, 
+                      tidy = FALSE, 
+                      comment = "")
+opts <- options(knitr.kable.NA = "", knitr.duplicate.label = "allow")
+```
+
+```{r read_parameters, eval=FALSE, include=FALSE}
+prs_rds <- snakemake@input[["pred_rds"]]
+map_rds <- snakamake@input[["map_prs.rds"]]
+```
+
+```{r}
+basedir <- "/home/michele/work/prs_pipeline/results_hg38/PD_GWASCATALOG/lassosum2"
+prs_rds <- file.path(basedir, "prs.rds")
+```
+
+# Polygenic Risk Score analysis
+
+```{r}
+prs_df <- readRDS(prs_rds)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
