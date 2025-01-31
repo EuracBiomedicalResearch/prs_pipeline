@@ -20,7 +20,7 @@ pred_csv <- snakemake@output[["pred_csv"]]
 # This function converts to numeric and set NA to 0
 to_double <- function(x){
     y <- as.numeric(x)
-    y[!is.na(y)] <- 0
+    y[is.na(y)] <- 0
     return(y)
 }
 
