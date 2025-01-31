@@ -185,18 +185,7 @@ def get_algs():
 
 # Define target rule for computing the PRSs
 def target_rule_prs():
-<<<<<<< HEAD
-  algs = get_algs()
-  output_files = []
-  for a in algs:
-  # for k, v in config["prs_algorithms"].items():
-    # try:
-      # if v["activate"]:
-    alg_path = os.path.join(odir, a)
-    preds = expand(os.path.join(alg_path, "prs{ext}"),
-                  pheno=gwas_traits, ext=[".rds", ".csv"])
-    output_files.extend(preds)
-=======
+
   output_files = []
   algs = get_algs()
   # for k, v in config["prs_algorithms"].items():
@@ -205,16 +194,10 @@ def target_rule_prs():
       preds = expand(os.path.join(alg_path, "prs{ext}"),
                     pheno=gwas_traits, ext=[".rds", ".csv"])
       output_files.extend(preds)
->>>>>>> develop
         # if k != "sct":
         #   maps = expand(os.path.join(alg_path, "map_prs.rds"),
         #                 pheno=gwas_traits)
         #   output_files.extend(maps)
-<<<<<<< HEAD
-    # except KeyError:
-    #   pass
-=======
->>>>>>> develop
   return output_files
 
 
