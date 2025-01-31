@@ -1,6 +1,6 @@
 {
   "eGFR": {
-    "path": "/home/michele/work/prs_pipeline/data/19-Dec-22_MW_eGFR_overall_EA_subtracted_CHRIS5K.txt.gz",
+    "path": "/home/michele/work/prs_pipeline/data/gwas1_hg19.csv.gz",
     "format": {
       "meta_data": {
         "format_name": "custom"

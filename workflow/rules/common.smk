@@ -16,11 +16,6 @@ odir = os.path.join(config["output_dir"], "{pheno}")
 data_dir = config["data_dir"]
 geno_dir = os.path.join(data_dir, "geno")
 
-# Create directory if they do not exists
-# os.makedirs(config["output_dir", exist_ok=True)
-# os.makedirs(data_dir, exist_ok=True)
-# os.makedirs(geno_dir, exist_ok=True)
-
 # Create resource directory and check existence
 resource_dir = config["cache_dir"]
 if not os.path.isdir(resource_dir):
@@ -212,13 +207,13 @@ def target_rule_plots():
   expand(os.path.join(odir, "beta_distribution.png"), pheno=gwas_traits)]
   return ofiles
  
-def target_rule_report():
-  algs = get_algs()
-  alg_path = [os.path.join(odir, a) for a in algs]
-  # output_files = [os.path.join(pp, "report.html" for pp in alg_path)]
-  output_files = [os.path.join(pp, "plot.svg" for pp in alg_path)]
+# def target_rule_report():
+#   algs = get_algs()
+#   alg_path = [os.path.join(odir, a) for a in algs]
+#   # output_files = [os.path.join(pp, "report.html" for pp in alg_path)]
+#   output_files = [os.path.join(pp, "plot.svg" for pp in alg_path)]
 
-  return output_files
+#   return output_files
 
 
 def get_formatbooks():
