@@ -29,7 +29,6 @@ cat(glue("Genotype file: {genofiles}"), "\n")
 cat(glue("Mapfile: {mapfile}"), "\n")
 cat(glue("gwasfile: {gwasfile}"), "\n")
 
-
 #---- Setup ----
 # Multi-cpu computing
 NCORES <- as.integer(snakemake@threads)
@@ -61,24 +60,27 @@ fam_info <- fam_info %>% mutate(
 
 #---- Load GWAS ----
 gwas_data <- readRDS(gwasfile)
+gwas_data <- gwas_data[chr==unique(map_snp$chr)[1]]
 
 #---- Match SNPs ----
 # This step has already been done 
 # (it's just a double checking that all the SNPs in the bim file are 
 # already in the GWAS Data)
 # info_snp <- readRDS(snakemake@input[["dfbeta"]])
-info_snp <- snp_match(gwas_data, map_snp)
+# TODO: Parametrize `match.min.prop`\
+info_snp <- tryCatch(
+  snp_match(gwas_data, map_snp, match.min.prop = 0.01),
+  error = function(e){ return(NA)}
 
-# TODO: Need to add choice if it's binary or quantitative trait
-# sd_ldref <- sqrt(2* map_snp[info_snp$`_NUM_ID_`, "freq"] * (1 - map_snp[info_snp$`_NUM_ID_`, "freq"]))
-# sd_trait_est <- quantile(sqrt(0.5 * (info_snp$n_eff * info_snp$beta_se**2) + info_snp$beta**2), probs=0.99)
-# sd_ss <- 1 / sqrt(info_snp$n_eff * info_snp$beta_se**2 + info_snp$beta**2)
-# sd_ss <- sd_ss / quantile(sd_ss, 0.99) * sqrt(0.5)
+)
 
-# is_bad <- 
-#   sd_ss < (0.7 * sd_ldref) | sd_ss > (sd_ldref + 0.1) | sd_ss < 0.1 | sd_ldref < 0.05
+if (is.null(nrow(info_snp))){
+  pred_mat <- data.frame(familyID=geno_data$fam$family.ID, sampleID=geno_data$fam$sample.ID, PRS=0)
 
+  saveRDS(pred_mat, file=pred_rds)
+  write.table(pred_mat, file=pred_csv, sep="\t", row.names = FALSE, col.names = TRUE, quote=FALSE)
 
+} else{
 # Check if there is no effects to estimate
 # if (length(is_bad) == 0){
 is_bad <- rep(FALSE, nrow(info_snp))
@@ -93,49 +95,33 @@ lpval[info_snp[!is_bad,]$`_NUM_ID_`] <- -log10(info_snp[!is_bad,]$p)
 
 t1 <- Sys.time()
 #---- Clumping optimizer ----
-clump_res_file <- snakemake@output[["clump_opt"]]
-if (file.exists(clump_res_file) & force == FALSE){
-  cat("Found clumping file, reading...\n")
-  clump_res <- readRDS(clump_res_file)
-} else {
-  cat("Start clumping...\n")
-  clump_res <- snp_grid_clumping(
-    G, 
-    infos.chr = map_snp$chr,
-    infos.pos = map_snp$pos,
-    lpS = lpval,
-    exclude = which(is.na(lpval)),
-    ncores = NCORES)
-    #ind.row = ixtrain)
-  saveRDS(clump_res, file=clump_res_file)
-  t2 <- Sys.time()
-  cat("Clumping optimiziation done in ", t2 - t1, " sec.\n")
-}
+cat("Start clumping...\n")
+clump_res <- snp_grid_clumping(
+  G, 
+  infos.chr = map_snp$chr,
+  infos.pos = map_snp$pos,
+  lpS = lpval,
+  exclude = which(is.na(lpval)),
+  ncores = NCORES)
+  #ind.row = ixtrain)
+# saveRDS(clump_res, file=clump_res_file)
+t2 <- Sys.time()
+cat("Clumping optimiziation done in ", t2 - t1, " sec.\n")
 
 t1 <- Sys.time()
 #---- Thresholding ----
 # TODO: add pvalue threshold as parameter
-multi_prs_file <- snakemake@output[["multi_prs"]]
-multi_prsbk_file <- snakemake@output[["multi_prs_bk"]]
-if (file.exists(multi_prs_file) & force == FALSE){
-  cat("Found thresholding file, reading...\n")
-  multi_PRS <- readRDS(multi_prs_file)
-} else {
-  if (file.exists(multi_prsbk_file)){
-    file.remove(multi_prsbk_file)
-  }
-  cat("Start thresholding...\n")
-  multi_PRS <- snp_grid_PRS(
-    G,
-    all_keep = clump_res,
-    betas = beta,
-    lpS = lpval,
-    backingfile = sub(".rds", "", multi_prs_file),
-    n_thr_lpS = 10,
-    ncores = NCORES)
-  t2 <- Sys.time()
-  cat("Thresholding optimiziation done in ", t2 - t1, " sec.\n")
-}
+cat("Start thresholding...\n")
+multi_PRS <- snp_grid_PRS(
+  G,
+  all_keep = clump_res,
+  betas = beta,
+  lpS = lpval,
+  # backingfile = sub(".rds", "", multi_prs_file),
+  n_thr_lpS = 10,
+  ncores = NCORES)
+t2 <- Sys.time()
+cat("Thresholding optimiziation done in ", t2 - t1, " sec.\n")
 
 # Save values into a matrix
 # 
@@ -149,8 +135,8 @@ grids <- attr(all_keep, "grid")
 ngrids <- nrow(grids)
 n_thr <- length(lpS_thr)
 nparams <- ngrids * n_thr
-# nchroms <- 22
 
+# TODO: Check the `nparams`, if less than 1 should report anyway a PRS set to 0
 pred_mat <- matrix(0, ncol = nparams, nrow = nrow(multi_PRS))
 for (i in seq(1, nparams)){
   ind.col <- seq(i, length.out = 1, by = nparams)
@@ -165,28 +151,9 @@ saveRDS(pred_mat, file=pred_rds)
 
 write.table(pred_mat, file=pred_csv, sep="\t", row.names = FALSE, col.names = TRUE, quote=FALSE)
 t1 <- Sys.time()
-
+}
 
 #---- Compute PRS using model ----
-# final_mod_file <- snakemake@output[["final_mod"]]
-# if (file.exists(final_mod_file) & force == FALSE ){
-#   final_mod <- readRDS(final_mod_file)
-#   cat("Load `final_models` scores....")
-#   # cat("Nothing to be done for this script, `final_mod` has been already computed!")
-# } else {
-#   cat("Start PRS model optimization...\n")
-#   final_mod <- snp_grid_stacking(
-#     multi_PRS, 
-#     yscaled, 
-#     # ind.train = ixtrain, 
-#     covar.train=cov_mat, 
-#     ncores = NCORES, K = 10)
-#   t2 <- Sys.time()
-#   # Save final model
-#   saveRDS(final_mod, file=final_mod_file)
-#   cat("Model optimiziation done in ", t2 - t1, " sec.\n")
-# }
-
 cat("Quitting...\n")
 q(save = "no")
 
