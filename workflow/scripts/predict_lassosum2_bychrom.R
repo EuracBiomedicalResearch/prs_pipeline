@@ -47,4 +47,4 @@ cat("Saving prediction to file csv...\n")
 # prs <- data.table(family.ID=fam_info$family.ID, sampleID=fam_info$sample.ID, 
 # prs_ldpred2_auto=pred_auto)
 write.table(prs_all_samps, file = pred_csv, sep = "\t", row.names = FALSE,
-    col.names = FALSE)
+    col.names = TRUE)
