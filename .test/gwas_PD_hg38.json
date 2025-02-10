@@ -1,6 +1,6 @@
 {
   "PD_GWASCATALOG": {
-    "path": "/home/michele/work/prs_pipeline/data/GCST009325.h.tsv.gz",
+    "path": "/home/michele/work/prs_pipeline/data/gwas2_hg38.csv.gz",
     "format": {
       "meta_data": {
         "format_name": "custom"
