@@ -71,24 +71,55 @@ rule move_and_collect:
 
 rule predict_prscs:
   input:
-    bim = expand(os.path.join(geno_dir, "qc_geno_chr{chrom}_rsid.bim"), 
-                 chrom=range(1, genotype_conf["nchrom"] + 1)),
-    beta_shrinked = os.path.join(odir, "prscs/beta_all.txt"),
-    genotype_rds = os.path.join(geno_dir, "qc_geno_all.rds"),
+    bim = os.path.join(geno_dir, "qc_geno_chr{chrom}_rsid.bim"),
+    beta_shrinked = os.path.join(odir, "prscs/_pst_eff_a1_b0.5_phiauto_chr{chrom}.txt"),
+    genotype_rds = os.path.join(geno_dir, "qc_geno_chr{chrom}.rds")
   output:
-    pred_file = os.path.join(odir, "prscs/prs.rds"),
-    pred_csv = os.path.join(odir, "prscs/prs.csv"),
-    map_file = os.path.join(odir, "prscs/map_prs.rds"),
-  params: 
+    pred_file = os.path.join(odir, "prscs/pred_chr{chrom}.rds"),
+    map_file = os.path.join(odir, "prscs/map_chr{chrom}.rds"),
+  params:
     gwas_conf = lookup("{pheno}", within=gwases),
     ld_dir = get_ldblk_dir(),
     lddata = lddata
-  resources:
-    mem_mb=12000
   conda:
     "../envs/bigsnpr.yaml"
   script:
     "../scripts/predict_prscs.R"
+
+
+rule collect_prscs:
+  input:
+    pred_file = expand_chrom(os.path.join(odir, "prscs/pred_chr{chrom}.rds"))
+  output:
+    pred_rds = os.path.join(odir, "prscs/prs.rds"),
+    pred_csv = os.path.join(odir, "prscs/prs.csv"),
+  resources:
+    mem_mb=14000
+  conda:
+    "../envs/bigsnpr.yaml"
+  script:
+    "../scripts/collect_prscs_prs.R"
+  
+# rule predict_prscs:
+#   input:
+#     bim = expand(os.path.join(geno_dir, "qc_geno_chr{chrom}_rsid.bim"), 
+#                  chrom=range(1, genotype_conf["nchrom"] + 1)),
+#     beta_shrinked = os.path.join(odir, "prscs/beta_all.txt"),
+#     genotype_rds = os.path.join(geno_dir, "qc_geno_all.rds"),
+#   output:
+#     pred_file = os.path.join(odir, "prscs/prs.rds"),
+#     pred_csv = os.path.join(odir, "prscs/prs.csv"),
+#     map_file = os.path.join(odir, "prscs/map_prs.rds"),
+#   params: 
+#     gwas_conf = lookup("{pheno}", within=gwases),
+#     ld_dir = get_ldblk_dir(),
+#     lddata = lddata
+#   resources:
+#     mem_mb=12000
+#   conda:
+#     "../envs/bigsnpr.yaml"
+#   script:
+#     "../scripts/predict_prscs.R"
 
 
 rule get_ld_ref_prscs:

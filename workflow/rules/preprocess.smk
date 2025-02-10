@@ -86,23 +86,23 @@ rule write_genotype_mergelist:
                 fi = i.replace(".bed", "")
                 f.write(fi + "\n")
 
-rule merge_all_genotypes:
-  input:
-    rules.write_genotype_mergelist.output #'merge_list_all.txt'
-  output:
-    bed = os.path.join(geno_dir, "qc_geno_chrall.bed"),
-    bim = os.path.join(geno_dir, "qc_geno_chrall.bim"),
-    fam = os.path.join(geno_dir, "qc_geno_chrall.fam")
-  params:
-    prefixo=lambda wildcards, output: output.bed.replace('.bed', '')
-  message:
-    "Merge plink files"
-  resources:
-    mem_mb=72000
-  conda:
-    "../envs/plink.yaml"
-  script:
-    "../scripts/plink_merge.py"
+# rule merge_all_genotypes:
+#   input:
+#     rules.write_genotype_mergelist.output #'merge_list_all.txt'
+#   output:
+#     bed = os.path.join(geno_dir, "qc_geno_chrall.bed"),
+#     bim = os.path.join(geno_dir, "qc_geno_chrall.bim"),
+#     fam = os.path.join(geno_dir, "qc_geno_chrall.fam")
+#   params:
+#     prefixo=lambda wildcards, output: output.bed.replace('.bed', '')
+#   message:
+#     "Merge plink files"
+#   resources:
+#     mem_mb=72000
+#   conda:
+#     "../envs/plink.yaml"
+#   script:
+#     "../scripts/plink_merge.py"
 
 
 rule import_geno_into_r_bychr:
