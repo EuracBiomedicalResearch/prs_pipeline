@@ -6,6 +6,7 @@ library(forcats)
 library(glue)
 library(bigsnpr)
 library(rmio)
+library(data.table)
 
 # Avoid nested parallel computation...
 Sys.setenv(OPENBLAS_NUM_THREADS=1)
@@ -24,10 +25,22 @@ gwasfile <- snakemake@input[["gwas_data"]]
 
 pred_rds <- snakemake@output[["pred_rds"]]
 pred_csv <- snakemake@output[["pred_csv"]]
+params_csv <- snakemake@output[["params_csv"]]
 
 cat(glue("Genotype file: {genofiles}"), "\n")
 cat(glue("Mapfile: {mapfile}"), "\n")
 cat(glue("gwasfile: {gwasfile}"), "\n")
+
+#---- Handle empty variant intersection ----
+exit_empty <- function(){
+  # Create empty file for successfull pipeline workflow
+  pred_mat <- data.table(geno_data$fam)
+  pred_mat[, PRS := 0]
+  saveRDS(pred_mat, file=pred_rds)
+  write.table(pred_mat, file=pred_csv, sep="\t", row.names = FALSE, col.names = TRUE, quote=FALSE)
+  file.create(params_csv)
+  quit(save="no")
+}
 
 #---- Setup ----
 # Multi-cpu computing
@@ -75,82 +88,81 @@ info_snp <- tryCatch(
 )
 
 if (is.null(nrow(info_snp))){
-  pred_mat <- data.frame(familyID=geno_data$fam$family.ID, sampleID=geno_data$fam$sample.ID, PRS=0)
+  exit_empty()
+} else{
+  is_bad <- rep(FALSE, nrow(info_snp))
 
+  #---- Create Beta and LogP vector ----
+  cat("Creating betas and logs...", "\n")
+  beta <- rep(NA, ncol(G))
+  beta[info_snp[!is_bad,]$`_NUM_ID_`] <- info_snp[!is_bad,]$beta
+  lpval <- rep(NA, ncol(G))
+  lpval[info_snp[!is_bad,]$`_NUM_ID_`] <- -log10(info_snp[!is_bad,]$p)
+
+  t1 <- Sys.time()
+  #---- Clumping optimizer ----
+  cat("Start clumping...\n")
+  clump_res <- snp_grid_clumping(
+    G, 
+    infos.chr = map_snp$chr,
+    infos.pos = map_snp$pos,
+    lpS = lpval,
+    exclude = which(is.na(lpval)),
+    ncores = NCORES)
+  t2 <- Sys.time()
+  cat("Clumping optimiziation done in ", t2 - t1, " sec.\n")
+
+  t1 <- Sys.time()
+  #---- Thresholding ----
+  # TODO: add pvalue threshold as parameter
+  cat("Start thresholding...\n")
+  multi_PRS <- snp_grid_PRS(
+    G,
+    all_keep = clump_res,
+    betas = beta,
+    lpS = lpval,
+    # backingfile = sub(".rds", "", multi_prs_file),
+    n_thr_lpS = 10,
+    ncores = NCORES)
+  t2 <- Sys.time()
+  cat("Thresholding optimiziation done in ", t2 - t1, " sec.\n")
+
+  # Save values into a matrix
+  # NB multi_PRS contains the PRS for each of the parameters in the grid.ldS.thr and all_keep grid.
+  # store by chromosome, lpthreshold and grid parameters.
+  # indices from 1 to nrow(attr(all_keep, "grid")) * length(lpS_thr) are for chromosome 1 and so on
+  all_keep <- attr(multi_PRS, "all_keep")
+  lpS_thr <- attr(multi_PRS, "grid.lpS.thr")
+
+  grids <- attr(all_keep, "grid")
+  print(grids)
+  print(lpS_thr)
+  ngrids <- nrow(grids)
+  n_thr <- length(lpS_thr)
+  nparams <- ngrids * n_thr
+
+  # Save parameters
+  ixparams <- expand.grid(1:n_thr, 1:ngrids)
+  params_df <- grids[ixparams[,2],]
+  params_df$lpS_thr <- lpS_thr
+  write.table(params_df, file=params_csv, col.names = TRUE, sep="\t", quote=FALSE, 
+    row.names = FALSE)
+  
+  # TODO: Check the `nparams`, if less than 1 should report anyway a PRS set to 0
+  pred_mat <- matrix(0, ncol = nparams, nrow = nrow(multi_PRS))
+  for (i in seq(1, nparams)){
+    ind.col <- seq(i, length.out = 1, by = nparams)
+    # pred_mat[, i] <- rowSums(multi_PRS[, ind.col])
+    pred_mat[, i] <- multi_PRS[, ind.col]
+  }
+  pred_mat <- as.data.frame(pred_mat)
+  pred_mat <- cbind(familyID=geno_data$fam$family.ID,
+  sampleID=geno_data$fam$sample.ID, pred_mat)
+
+  # Saving output
   saveRDS(pred_mat, file=pred_rds)
   write.table(pred_mat, file=pred_csv, sep="\t", row.names = FALSE, col.names = TRUE, quote=FALSE)
-
-} else{
-# Check if there is no effects to estimate
-# if (length(is_bad) == 0){
-is_bad <- rep(FALSE, nrow(info_snp))
-# }
-
-#---- Create Beta and LogP vector ----
-cat("Creating betas and logs...", "\n")
-beta <- rep(NA, ncol(G))
-beta[info_snp[!is_bad,]$`_NUM_ID_`] <- info_snp[!is_bad,]$beta
-lpval <- rep(NA, ncol(G))
-lpval[info_snp[!is_bad,]$`_NUM_ID_`] <- -log10(info_snp[!is_bad,]$p)
-
-t1 <- Sys.time()
-#---- Clumping optimizer ----
-cat("Start clumping...\n")
-clump_res <- snp_grid_clumping(
-  G, 
-  infos.chr = map_snp$chr,
-  infos.pos = map_snp$pos,
-  lpS = lpval,
-  exclude = which(is.na(lpval)),
-  ncores = NCORES)
-  #ind.row = ixtrain)
-# saveRDS(clump_res, file=clump_res_file)
-t2 <- Sys.time()
-cat("Clumping optimiziation done in ", t2 - t1, " sec.\n")
-
-t1 <- Sys.time()
-#---- Thresholding ----
-# TODO: add pvalue threshold as parameter
-cat("Start thresholding...\n")
-multi_PRS <- snp_grid_PRS(
-  G,
-  all_keep = clump_res,
-  betas = beta,
-  lpS = lpval,
-  # backingfile = sub(".rds", "", multi_prs_file),
-  n_thr_lpS = 10,
-  ncores = NCORES)
-t2 <- Sys.time()
-cat("Thresholding optimiziation done in ", t2 - t1, " sec.\n")
-
-# Save values into a matrix
-# 
-# NB multi_PRS contains the PRS for each of the parameters in the grid.ldS.thr and all_keep grid.
-# store by chromosome, lpthreshold and grid parameters.
-# indices from 1 to nrow(attr(all_keep, "grid")) * length(lpS_thr) are for chromosome 1 and so on
-all_keep <- attr(multi_PRS, "all_keep")
-lpS_thr <- attr(multi_PRS, "grid.lpS.thr")
-
-grids <- attr(all_keep, "grid")
-ngrids <- nrow(grids)
-n_thr <- length(lpS_thr)
-nparams <- ngrids * n_thr
-
-# TODO: Check the `nparams`, if less than 1 should report anyway a PRS set to 0
-pred_mat <- matrix(0, ncol = nparams, nrow = nrow(multi_PRS))
-for (i in seq(1, nparams)){
-  ind.col <- seq(i, length.out = 1, by = nparams)
-  # pred_mat[, i] <- rowSums(multi_PRS[, ind.col])
-  pred_mat[, i] <- multi_PRS[, ind.col]
-}
-pred_mat <- as.data.frame(pred_mat)
-pred_mat <- cbind(familyID=geno_data$fam$family.ID,
-sampleID=geno_data$fam$sample.ID, pred_mat)
-
-saveRDS(pred_mat, file=pred_rds)
-
-write.table(pred_mat, file=pred_csv, sep="\t", row.names = FALSE, col.names = TRUE, quote=FALSE)
-t1 <- Sys.time()
+  t1 <- Sys.time()
 }
 
 #---- Compute PRS using model ----

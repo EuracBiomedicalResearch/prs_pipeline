@@ -34,6 +34,20 @@ pred_grid_file <- snakemake@output[["pred_grid"]]
 params_grid_file <- snakemake@output[["params_grid"]]
 pred_auto_file <- snakemake@output[["pred_auto"]]
 
+#---- Handle empty variant intersection ----
+exit_empty <- function(){
+  # Create empty file for successfull pipeline workflow
+  pred_mat <- data.table(geno$fam)
+  pred_mat[, PRS := 0]
+  saveRDS(pred_mat, file=pred_auto_file)
+  saveRDS(pred_mat, file=pred_grid_file)
+
+  # Touch files
+  file.create(df_beta_good_rds)
+  file.create(params_grid_file)
+  quit(save="no")
+}
+
 #---- Resources ----
 NCORES <- snakemake@threads
 tmpdir <- snakemake@resources[["tmpdir"]]
@@ -60,13 +74,16 @@ df_beta <- tryCatch(
 )
 
 if (is.null(nrow(df_beta))){
-  pred_mat <- data.frame(familyID=geno$fam$family.ID, sampleID=geno$fam$sample.ID, PRS=0)
-  saveRDS(pred_mat, file=pred_auto_file)
-  saveRDS(pred_mat, file=pred_grid_file)
+  # pred_mat <- data.frame(familyID=geno$fam$family.ID, 
+  #   sampleID=geno$fam$sample.ID, PRS=0)
+  # saveRDS(pred_mat, file=pred_auto_file)
+  # saveRDS(pred_mat, file=pred_grid_file)
 
-  # Touch files
-  file.create(df_beta_good_rds)
-  file.create(params_grid_file)
+  # # Touch files
+  # file.create(df_beta_good_rds)
+  # file.create(params_grid_file)
+  exit_empty()
+
 } else {
   # Rename df_beta columns
   names(df_beta)[which(names(df_beta) == "_NUM_ID_.ss")] <- "_NUM_ID_.SUMSTAT"
@@ -91,9 +108,14 @@ if (is.null(nrow(df_beta))){
   #---- Read correlation matrix previously computed ----
   tmp <- tempfile(tmpdir = tmpdir)
   ix <- df_beta_good[chr == chrom, `_NUM_ID_`]
-
+  
   # retrieve indexes relative to the correlation matrix positions
   ix2 <- match(ix, which(mapLDref$chr == chrom))
+  
+  # Not enough variants, exit...
+  if (sum(!is.na(ix2)) < 2){
+    exit_empty()
+  }
 
   # Get correlation file
   cat(glue("Reading {corfiles}"), "\n")

@@ -40,7 +40,7 @@ for (rr in beta_auto_file){
     }
     i <- i + 1
 }
-pred_auto <- df[, .SD, .SDcols =!c("PRS")]
+pred_auto <- df[, .SD, .SDcols = !c("PRS")]
 pred_auto$PRS <- prs
 
 #---- Save predictions into a rdsfile ----

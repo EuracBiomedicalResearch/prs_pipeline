@@ -25,7 +25,7 @@ lddata <- snakemake@params[["lddata"]]
 gwas_conf <- snakemake@params[["gwas_conf"]]
 
 #---- Read genome build for the GWAS ----
-gwas_build = gwas_conf[["genome_build"]]
+gwas_build <- gwas_conf[["genome_build"]]
 
 # -----------------------------------------------------
 # Uncomment the following lines if 
@@ -59,7 +59,7 @@ geno <- snp_attach(geno_file)
 betas <- data.table::fread(beta_file, header=FALSE, 
                            col.names=c("chr", "id", "pos", "a0", "a1", "beta"))
 
-if (nrow(betas) == 0 | is.null(betas)){
+if (nrow(betas) == 0){
   pred_mat <- data.table(family.ID=geno$fam$family.ID, 
     sampleID=geno$fam$sample.ID, PRS=0)
   saveRDS(pred_mat, file=pred_file)
@@ -75,12 +75,6 @@ if (nrow(betas) == 0 | is.null(betas)){
     betas <- betas[, -"pos"]
     setnames(betas, "BP", "pos")
   }
-
-  # bimdf[, betas:=NA]
-  # bimdf_betas <- merge(bimdf, betas, by=c("CHROM", "RSID", "BP", "A0", "A1"))
-  # setorder(bimdf, chr, pos)
-
-
 
   #---- Mapping geno file with new annotated bim ----
   betas_match <- snp_match(sumstats = betas, info_snp = bimdf)

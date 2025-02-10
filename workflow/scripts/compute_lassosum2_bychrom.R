@@ -27,6 +27,26 @@ df_beta_good_rds <- snakemake@output[["df_beta"]]
 params_grid_file <- snakemake@output[["params_file"]]
 pred_file <- snakemake@output[["pred_file"]]
 
+#---- Handle empty variant intersection ----
+exit_empty <- function(){
+  # Create empty file for successfull pipeline workflow
+  # Create null matrix for PRS (effect is 0 when no variants match)
+  nparams <- 120
+  pred_mat <- data.table(geno$fam)
+  # data.frame(familyID=geno$fam$family.ID, sampleID=geno$fam$sample.ID)
+  prs_tmp <- as.data.frame(matrix(0, ncol=nparams, nrow=length(geno$fam$family.ID)))
+  colnames(prs_tmp) <- paste0("p", seq(1, nparams))
+  pred_mat <- cbind(pred_mat, prs_tmp)
+  pred_mat <- as.data.table(pred_mat)
+  saveRDS(pred_mat, file=pred_file)
+
+  # Touch files
+  file.create(df_beta_good_rds)
+  file.create(params_grid_file)
+  quit(save="no")
+}
+
+
 #---- Resources ----
 NCORES <- snakemake@threads
 tmpdir <- snakemake@resources[["tmpdir"]]
@@ -52,19 +72,7 @@ df_beta <- tryCatch(
 )
 
 if (is.null(nrow(df_beta))){
-  # Create null matrix for PRS (effect is 0 when no variants match)
-  nparams <- 120
-  pred_mat <- data.table(geno$fam)
-  # data.frame(familyID=geno$fam$family.ID, sampleID=geno$fam$sample.ID)
-  prs_tmp <- as.data.frame(matrix(0, ncol=nparams, nrow=length(geno$fam$family.ID)))
-  colnames(prs_tmp) <- paste0("p", seq(1, nparams))
-  pred_mat <- cbind(pred_mat, prs_tmp)
-  pred_mat <- as.data.table(pred_mat)
-  saveRDS(pred_mat, file=pred_file)
-
-  # Touch files
-  file.create(df_beta_good_rds)
-  file.create(params_grid_file)
+  exit_empty()
 } else {
   names(df_beta)[which(names(df_beta) == "_NUM_ID_.ss")] <- "_NUM_ID_.SUMSTAT"
 
@@ -90,6 +98,11 @@ if (is.null(nrow(df_beta))){
 
   # retrieve indexes relative to the correlation matrix positions
   ix2 <- match(ix, which(mapLDref$chr == chrom))
+
+  # Not enough variants...exit
+  if (sum(!is.na(ix2)) < 2){
+    exit_empty()
+  }
 
   # Get correlation file
   ff <- corfiles
