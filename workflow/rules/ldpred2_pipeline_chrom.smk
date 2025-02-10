@@ -29,10 +29,10 @@ rule prs_LDpred2:
     # corfiles = expand("resources/ld_ref/ldref_hm3_plus/LD_with_blocks_chr{chrom}.rds", 
     #                  chrom=range(1,23))
   output:
-    final_mod = os.path.join(odir, "ldpred2/final_mod_chr{chrom}_ldpred2.rds"),
-    beta_auto = os.path.join(odir, "ldpred2/beta_auto_chr{chrom}_ldpred2.rds"),
+    # final_mod = os.path.join(odir, "ldpred2/final_mod_chr{chrom}_ldpred2.rds"),
+    # beta_auto = os.path.join(odir, "ldpred2/beta_auto_chr{chrom}_ldpred2.rds"),
     df_good = os.path.join(odir, "ldpred2/df_beta_good_with_ld_chr{chrom}.rds"),
-    beta_grid = os.path.join(odir, "ldpred2/beta_grid_chr{chrom}_ldpred2.rds"),
+    # beta_grid = os.path.join(odir, "ldpred2/beta_grid_chr{chrom}_ldpred2.rds"),
     pred_grid = os.path.join(odir, "ldpred2/pred_grid_chr{chrom}_ldpred2.rds"),
     params_grid = os.path.join(odir, "ldpred2/params_grid_chr{chrom}_ldpred2.rds"),
     pred_auto = os.path.join(odir, "ldpred2/pred_auto_chr{chrom}_ldpred2.rds")
@@ -84,7 +84,7 @@ rule prs_lassosum2:
     # corfiles = expand("resources/ld_ref/ldref_hm3_plus/LD_with_blocks_chr{chrom}.rds", 
                      # chrom=range(1,23))
   output:
-    beta_file = os.path.join(odir, "lassosum2/beta_lassosum2_chr{chrom}.rds"),
+    # beta_file = os.path.join(odir, "lassosum2/beta_lassosum2_chr{chrom}.rds"),
     df_beta = os.path.join(odir, "lassosum2/df_beta_good_lassosum2_chr{chrom}.rds"),
     params_file = os.path.join(odir, "lassosum2/params_grid_lassosum2._chr{chrom}rds"),
     pred_file = os.path.join(odir, "lassosum2/pred_lassosum2_chr{chrom}.rds")
