@@ -23,6 +23,7 @@ rule annotate_bim:
   script:
     "../scripts/reannotate_bim_files_2.py"
 
+# TODO: Add N of the GWAS as input parameter
 rule run_prscs:
   input:
     gwas_prscs = os.path.join(odir, "gwas_prscs.csv"),
