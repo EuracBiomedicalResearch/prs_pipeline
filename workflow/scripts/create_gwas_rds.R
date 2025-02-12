@@ -10,6 +10,7 @@ outfile <- snakemake@output[["gwas_rds"]]
 gwas_conf <- snakemake@params[["gwas_conf"]]
 res_dir <- snakemake@params[["res_dir"]]
 col_dict <- gwas_conf[["format"]]
+format_name <- col_dict[["meta_data"]][["format_name"]]
 
 # Read name translation from `GWASlab/formatbooks` to `bigsnpr`
 # fmt_2_R <- jsonlite::read_json(file.path(res_dir, "formatbook_to_R.json"))$format
@@ -21,13 +22,13 @@ if (gwas_conf[["header"]] == TRUE){
     # Throw error because no column names/format is provided
     stop(glue("Please provide a column schema for GWAS: {infile}"))
   } else {
-      if (is.list(col_dict)){
+      if (format_name %in% c("custom", "")){
         # Column definition provided by the user
         format_names <- col_dict[["format_dict"]]
-    } else if (is.character(col_dict) & col_dict != ""){
+    } else if (is.character(format_name) & !(format_name %in% c("custom", ""))){
         # Column definition provided by formatbook through predefined formats
         format_names <- jsonlite::read_json(file.path(res_dir, "formatbook", "formatbook.json"))
-        format_names <- format_names[[col_dict]][["format_dict"]]
+        format_names <- format_names[[format_name]][["format_dict"]]
     } else {
       stop(glue("Please provide a column schema for GWAS: {infile}"))
     }
