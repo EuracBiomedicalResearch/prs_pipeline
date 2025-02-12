@@ -37,3 +37,7 @@ rule all:
 rule all_plots:
   input:
     target_rule_plots()
+    
+# TODO: Add export of variants used for computation of PRS
+# TODO: Adapt pipeline to work with sBayesR
+# TODO: Add sBayesRS pipeline

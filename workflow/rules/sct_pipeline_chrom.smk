@@ -5,9 +5,8 @@ rule prs_CT:
     geno_data = os.path.join(geno_dir, "qc_geno_chr{chrom}.rds"),
     map_data = os.path.join(geno_dir, "qc_geno_chr{chrom}_map.rds"),
     gwas_data = os.path.join(odir, "gwas.rds")
-  threads: 8
   resources:
-    mem_mb = 12000
+    mem_mb = get_mem_mb
   output:
     # clump_opt = os.path.join(odir, "sct/clump_res_ct_chr{chrom}.rds"),
     # multi_prs = os.path.join(odir, "sct/multi_prs_ct_chr{chrom}.rds"),
@@ -32,6 +31,8 @@ rule predict_CT:
     pred_rds = os.path.join(odir, "sct/prs.rds"),
     pred_csv = os.path.join(odir, "sct/prs.csv"),
     params_csv = os.path.join(odir, "sct/prs_params.csv")
+  resources:
+    mem_mb = get_mem_mb
   conda:
     "../envs/bigsnpr.yaml"
   script:
