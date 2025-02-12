@@ -9,7 +9,7 @@ rule estimate_heritability:
   params:
     genotype_conf = genotype_conf
   resources:
-    mem_mb = 8000
+    mem_mb = get_mem_mb
   conda:
     "../envs/bigsnpr.yaml"
   script:
@@ -37,11 +37,10 @@ rule prs_LDpred2:
     params_grid = os.path.join(odir, "ldpred2/params_grid_chr{chrom}_ldpred2.rds"),
     pred_auto = os.path.join(odir, "ldpred2/pred_auto_chr{chrom}_ldpred2.rds")
   resources:
-    mem_mb = 24000,
+    mem_mb = get_mem_mb,
     tmpdir = "tmp-data"
   params:
     genotype_conf = genotype_conf
-  threads: 6
   conda:
     "../envs/bigsnpr.yaml"
   script:
@@ -62,14 +61,12 @@ rule predict_LDpred2:
     pred_rds = os.path.join(odir, "ldpred2/prs.rds"),
     pred_csv = os.path.join(odir, "ldpred2/prs.csv"),
     # map_file = os.path.join(odir, "ldpred2/map_prs.rds")
-  threads: 16
   resources:
-    mem_mb = 32000
+    mem_mb = get_mem_mb
   conda:
     "../envs/bigsnpr.yaml"
   script:
     "../scripts/predict_LDpred2_bychrom.R"
-
 
 rule prs_lassosum2:
   message:
@@ -90,9 +87,8 @@ rule prs_lassosum2:
     pred_file = os.path.join(odir, "lassosum2/pred_lassosum2_chr{chrom}.rds")
   params:
     genotype_conf = genotype_conf
-  threads: 8
   resources:
-    mem_mb = 64000,
+    mem_mb = get_mem_mb,
     tmpdir = "tmp-data"
   conda:
     "../envs/bigsnpr.yaml"
@@ -114,16 +110,8 @@ rule predict_lassosum2:
     pred_csv = os.path.join(odir, "lassosum2/prs.csv"),
     # map_file = os.path.join(odir, "lassosum2/map_prs.rds"),
   resources:
-    mem_mb=14000
+    mem_mb=get_mem_mb
   conda:
     "../envs/bigsnpr.yaml"
   script:
     "../scripts/predict_lassosum2_bychrom.R"
-
-# TODO: Add export of variants used for computation of PRS
-# TODO: Adapt SCT pipeline to run on multiple chromosomes
-# TODO: Test SCT pipeline on different chromosomes
-# TODO: Adapt pipeline to run with PRSCS
-# TODO: Test PRSCS pipeline on different chromosomes
-# TODO: Adapt pipeline to work with sBayesR
-# TODO: Add sBayesRS pipeline

@@ -1,0 +1,25 @@
+restart-times: 3
+
+# Default resources
+default-resources:
+  mem_mb: 8000
+  retries: 3
+  threads: 1
+
+# Rule specific resources
+set-mem_mb:
+  create_gwas_rds: 8000
+  divide_by_chrom: 6000
+  import_genot_into_r_bychr: 8000
+  collect_prscs: 4000
+  predict_lassosum2: 4000
+  predict_LDpred2: 4000
+  predict_CT: 4000
+
+set-threads:
+  import_genot_into_r_bychr: 8
+  compute_distance: 8
+  prs_LDpred2: 12
+  prs_lassosum2: 8
+  run_prscs: 8
+  prs_CT: 8

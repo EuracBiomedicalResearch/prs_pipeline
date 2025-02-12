@@ -25,6 +25,8 @@ rule divide_by_chrom:
     '../envs/plink.yaml'
   params:
     genotype_conf = genotype_conf
+  resources:
+    mem_mb = get_mem_mb
   script:
     '../scripts/divide_by_chrom.py'
 
@@ -33,9 +35,6 @@ rule create_snplist:
     mafr2 = os.path.join(geno_dir, 'qc', 'chr{chrom}_maf_r2.txt')
   output:
     snplist = os.path.join(geno_dir, 'qc', 'snplist_chr{chrom}.txt')
-  resources:
-    mem_mb = 8000
-  threads: 1
   params:
     maf=0.05,
     r2=0.9
@@ -57,7 +56,7 @@ rule genotype_QC:
     geno = config["genorate"],
     mind = config["mind"]
   resources:
-    mem_mb=32000
+    mem_mb=get_mem_mb
   conda:
     "../envs/plink.yaml"
   shell:
@@ -86,24 +85,6 @@ rule write_genotype_mergelist:
                 fi = i.replace(".bed", "")
                 f.write(fi + "\n")
 
-# rule merge_all_genotypes:
-#   input:
-#     rules.write_genotype_mergelist.output #'merge_list_all.txt'
-#   output:
-#     bed = os.path.join(geno_dir, "qc_geno_chrall.bed"),
-#     bim = os.path.join(geno_dir, "qc_geno_chrall.bim"),
-#     fam = os.path.join(geno_dir, "qc_geno_chrall.fam")
-#   params:
-#     prefixo=lambda wildcards, output: output.bed.replace('.bed', '')
-#   message:
-#     "Merge plink files"
-#   resources:
-#     mem_mb=72000
-#   conda:
-#     "../envs/plink.yaml"
-#   script:
-#     "../scripts/plink_merge.py"
-
 
 rule import_geno_into_r_bychr:
   message:
@@ -116,15 +97,13 @@ rule import_geno_into_r_bychr:
     os.path.join(geno_dir, "qc_geno_chr{chrom}.rds"),
     os.path.join(geno_dir, "qc_geno_chr{chrom}.bk"),
     os.path.join(geno_dir, "qc_geno_chr{chrom}_map.rds")
-  threads: 16 
   resources: 
-    mem_mb = 64000,
-    tmpdir = "tmp-data"
+    tmpdir = "tmp-data",
+    mem_mb = get_mem_mb
   conda:
     "../envs/bigsnpr.yaml"
   script:
     "../scripts/load_genotype_all.R"
-
 
 rule import_genotype_into_r:
   message:
@@ -139,7 +118,7 @@ rule import_genotype_into_r:
     os.path.join(geno_dir, "qc_geno_all_map.rds")
   threads: 16 
   resources: 
-    mem_mb = 64000,
+    mem_mb = get_mem_mb,
     tmpdir = "tmp-data"
   conda:
     "../envs/bigsnpr.yaml"
@@ -151,9 +130,8 @@ rule compute_distance:
     mapfile = os.path.join(geno_dir, "qc_geno_chr{chrom}_map.rds")
   output:
     os.path.join(geno_dir, "qc_geno_chr{chrom}_map_gendist.rds")
-  threads: 12
   resources:
-    mem_mb = 32000,
+    mem_mb = get_mem_mb,
     tmpdir = "resources"
   conda:
     "../envs/bigsnpr.yaml"
@@ -203,7 +181,7 @@ rule qc_plot:
     plot_file = os.path.join(odir, "bad_variants.png"),
     plot_file2 = os.path.join(odir, "beta_distribution.png")
   resources:
-    mem_mb=24000
+    mem_mb=get_mem_mb
   conda:
     "../envs/bigsnpr.yaml"
   script:
@@ -225,7 +203,6 @@ rule create_ldref:
         ldfiles = expand('ld_ref/ld_chr{cc}.rds', cc=range(1,23)),
         genotype_rds = 'plinkFiles/chrall.rds'
     resources:
-        threads = 1,
         tmpdir = "tmp-data"
     output:
         'ld_ref/map_ldref.rds'
@@ -255,7 +232,7 @@ rule check_ld_ref:
     out_plot = 'data/ld_ref/{dataset}/condz_in_chr{chrom}.png',
     out_lmb = 'data/ld_ref/{dataset}/condz_in_lambda_chr{chrom}.txt'
   resources:
-    mem_mb = 24000
+    mem_mb = get_mem_mb
   script:
     "../scripts/plot_LD_by_chr.R"
 
@@ -270,8 +247,6 @@ rule get_rsid:
     resource_dir = resource_dir
   conda:
     "../envs/bcftools.yaml"
-  resources:
-    mem_mb=8000
   shell:
     """
     if [ ! -f {params.resource_dir}/{params.rsfile} ]
@@ -299,8 +274,6 @@ rule get_ld_ref_mat:
   params:
     zipfile = hm3zip,
     outpath = hm3matout
-  resources:
-    mem_mb = 8000
   shell:
     """
     if [ ! -f {params.zipfile} ]
