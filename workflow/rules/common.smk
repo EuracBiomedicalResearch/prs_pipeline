@@ -3,6 +3,7 @@ import os
 import itertools as it
 from snakemake.utils import validate
 from snakemake.rules import expand
+from snakemake import resources
 
 # Validate the config file
 validate(config, schema="../schemas/config.schema.yaml")
@@ -49,31 +50,16 @@ hm3corr = expand(os.path.join(hm3path, "ldref_hm3_plus", "LD_with_blocks_chr{chr
 hm3map = os.path.join(hm3path, "map_hm3_plus.rds")
 hm3matout = os.path.join(hm3path, "ldref_hm3_plus")
 
-
 # Get LD reference configuration
 ldref = config["ld_reference"]
 lddata = ldref["data"].lower()
 ldpop = ldref["population"].lower()
-
 
 def add_plink_ext(infile):
   myext = ["bed", "bim", "fam"]
   return {k: infile + f".{k}" for k in myext}
 
 def get_reference(wildcards):
-  # if genotype_conf["nchrom"] == 1:
-  #   ref_files = genotype_conf["plinkfiles"]["1"]
-  # else:
-  # file_format = genotype_conf["format"]
-  # if genotype_conf["divided_by_chrom"]:
-  #   if file_format == "plink":
-  #     ref_files = genotype_conf["files"][wildcards.chrom]
-  #   elif file_format == "vcf":
-  #     ref_files = genotype_conf["files"][wildcards.chrom]
-  #     ref_files = os.path.basename(ref_files).replace("vcf.gz", "")
-  #     ref_files = os.path.join("tmp-data/geno", ref_files)
-  # else:
-  #   ref_files = genotype_conf["files"][wildcards.chrom]
   ref_files = os.path.join(geno_dir, "geno_chr{chrom}")
   out_dict = add_plink_ext(ref_files)
   return out_dict
@@ -223,26 +209,9 @@ def get_formatbooks():
 def lift_ld_ref():
   return os.path.join(get_ldblk_dir(), f"snpinfo_{lddata}_hm3_hg38")
 
-# def tmp_ld():
-#   alg = "lassosum2"
-#   alg_path = os.path.join(odir, alg)
-#   ff = expand(os.path.join(alg_path, "beta_auto_chr{chrom}_ldpred2.rds"), 
-#   chrom=range(1,23), 
-#   pheno=gwas_traits)
-#   print(ff)
-#   return ff
-
-
-# # PRS-CS
-# def target_rule_prscs():
-
-#   return {"pred_prscs": expand("results/{pheno}/prscs/prs{ext}", 
-#                                pheno=gwas_traits, ext=[".rds", ".csv"]),
-#           "map_prscs": expand("results/{pheno}/prscs/map_prs.rds", pheno=gwas_traits)}
-
-# # LDPred2
-# def target_rule_ldpred2():
-#   return {"pred_ldpred2": expand("results/{pheno}/ldpred2/prs{ext}", pheno=gwas_traits,
-#                                 ext=[".rds", ".csv"])}
+# Dynamic mem requests
+def get_mem_mb(wildcards, attempt):
+  default_mem = workflow.resource_settings.default_resources.parsed['mem_mb']
+  return attempt * default_mem
 
 

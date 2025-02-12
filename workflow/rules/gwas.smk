@@ -17,6 +17,6 @@ rule create_gwas_rds:
     gwas_conf = lookup("{pheno}", within=gwases),
     res_dir = resource_dir
   resources:
-    mem_mb=16000
+    mem_mb = get_mem_mb
   script:
     "../scripts/create_gwas_rds.R"

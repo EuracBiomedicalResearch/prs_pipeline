@@ -4,7 +4,7 @@ rule gwas_for_prscs:
   output:
     gwas_prscs = os.path.join(odir, "gwas_prscs.csv")
   resources:
-    mem_mb = 16000
+    mem_mb = get_mem_mb
   conda:
     "../envs/bigsnpr.yaml"
   script:
@@ -19,13 +19,11 @@ rule annotate_bim:
   conda:
     "../envs/bcftools.yaml"
   resources:
-    mem_mb = 8000
+    mem_mb = get_mem_mb
   script:
     "../scripts/reannotate_bim_files_2.py"
 
-# TODO: When a single chromosome is provided PRS-CS 
-# expect the input should divided by chromosomes. The chrom argument 
-# to the function should be provided
+# TODO: Add N of the GWAS as input parameter
 rule run_prscs:
   input:
     gwas_prscs = os.path.join(odir, "gwas_prscs.csv"),
@@ -40,8 +38,7 @@ rule run_prscs:
     prefixbim = lambda wildcards, input: input.bim.replace(".bim", ""),
     prefixout = lambda wildcards, output: os.path.dirname(output.beta_prscs) + "/"
   resources:
-    mem_mb=16000
-  threads: 8
+    mem_mb=get_mem_mb
   conda:
     "../envs/prscs.yaml"
   shell:
@@ -63,7 +60,7 @@ rule move_and_collect:
   output:
     beta_shrinked = os.path.join(odir, "prscs/beta_all.txt")
   resources:
-    mem_mb = 8000
+    mem_mb = get_mem_mb
   shell:
     """
     cat {input.beta_prscs} > {output.beta_shrinked}
@@ -94,7 +91,7 @@ rule collect_prscs:
     pred_rds = os.path.join(odir, "prscs/prs.rds"),
     pred_csv = os.path.join(odir, "prscs/prs.csv"),
   resources:
-    mem_mb=14000
+    mem_mb=get_mem_mb
   conda:
     "../envs/bigsnpr.yaml"
   script:
