@@ -7,6 +7,7 @@ library(glue)
 library(bigsnpr)
 library(rmio)
 library(tidyr)
+library(data.table)
 
 #---- Setup ----
 # Input
