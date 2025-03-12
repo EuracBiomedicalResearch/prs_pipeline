@@ -17,11 +17,6 @@ odir = os.path.join(config["output_dir"], "{pheno}")
 data_dir = config["data_dir"]
 geno_dir = os.path.join(data_dir, "geno")
 
-# Create directory if they do not exists
-# os.makedirs(config["output_dir", exist_ok=True)
-# os.makedirs(data_dir, exist_ok=True)
-# os.makedirs(geno_dir, exist_ok=True)
-
 # Create resource directory and check existence
 resource_dir = config["cache_dir"]
 if not os.path.isdir(resource_dir):
@@ -65,6 +60,7 @@ def get_reference(wildcards):
   return out_dict
 
 def get_reference2(wildcards):
+  # TODO: allow for different number of chromosome
   nchrom = 22
   flist = expand(os.path.join(geno_dir, "qc_geno_chr{chrom}{ext}"), chrom=range(1, nchrom + 1), 
                ext=[".bed", ".bim", ".fam"])
@@ -148,11 +144,11 @@ def target_rule_preproc_bychr():
   return genofiles
 
 
-# SCT PRS
-def target_rule_sct():
-  return {"clump": expand(os.path.join(odir, "sct/clump_res_ct.rds"), pheno=gwas_traits),
-   "multi_rds": expand(os.path.join(odir, "sct/multi_prs_ct.rds"), pheno=gwas_traits),
-   "multi_bk": expand(os.path.join(odir, "sct/multi_prs_ct.bk"), pheno=gwas_traits)}
+# # SCT PRS
+# def target_rule_sct():
+#   return {"clump": expand(os.path.join(odir, "sct/clump_res_ct.rds"), pheno=gwas_traits),
+#    "multi_rds": expand(os.path.join(odir, "sct/multi_prs_ct.rds"), pheno=gwas_traits),
+#    "multi_bk": expand(os.path.join(odir, "sct/multi_prs_ct.bk"), pheno=gwas_traits)}
  
 # GWAS
 def target_rule_gwas():
@@ -163,7 +159,9 @@ def get_algs():
   """This function returns the activate algorithms
   """
   algs = []
+
   for k,v in config["prs_algorithms"].items():
+
     try:
       if v["activate"]:
         algs.append(k.lower())
@@ -174,6 +172,7 @@ def get_algs():
 
 # Define target rule for computing the PRSs
 def target_rule_prs():
+
   output_files = []
   algs = get_algs()
   # for k, v in config["prs_algorithms"].items():
@@ -193,7 +192,14 @@ def target_rule_plots():
   ofiles = [expand(os.path.join(odir, "bad_variants.png"), pheno=gwas_traits),
   expand(os.path.join(odir, "beta_distribution.png"), pheno=gwas_traits)]
   return ofiles
- 
+
+def target_rule_dist():
+  algs = get_algs()
+  phenos = gwas_traits
+  ofiles = [expand(os.path.join(odir, "prs_dist_{algorithm}.png"), 
+  pheno=phenos, algorithm=algs)]
+  return ofiles
+
 # def target_rule_report():
 #   algs = get_algs()
 #   alg_path = [os.path.join(odir, a) for a in algs]
@@ -201,7 +207,6 @@ def target_rule_plots():
 #   output_files = [os.path.join(pp, "plot.svg" for pp in alg_path)]
 
 #   return output_files
-
 
 def get_formatbooks():
   return os.path.join(resource_dir, "formatbook", "formatbook.json")

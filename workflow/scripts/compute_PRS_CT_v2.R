@@ -26,6 +26,7 @@ gwasfile <- snakemake@input[["gwas_data"]]
 pred_rds <- snakemake@output[["pred_rds"]]
 pred_csv <- snakemake@output[["pred_csv"]]
 params_csv <- snakemake@output[["params_csv"]]
+info_snp_csv <- snakemake@output[["info_snp_csv"]]
 
 cat(glue("Genotype file: {genofiles}"), "\n")
 cat(glue("Mapfile: {mapfile}"), "\n")
@@ -39,6 +40,7 @@ exit_empty <- function(){
   saveRDS(pred_mat, file=pred_rds)
   write.table(pred_mat, file=pred_csv, sep="\t", row.names = FALSE, col.names = TRUE, quote=FALSE)
   file.create(params_csv)
+  file.create(info_snp_csv)
   quit(save="no")
 }
 
@@ -127,21 +129,17 @@ if (is.null(nrow(info_snp))){
   t2 <- Sys.time()
   cat("Thresholding optimiziation done in ", t2 - t1, " sec.\n")
 
-  # Save values into a matrix
   # NB multi_PRS contains the PRS for each of the parameters in the grid.ldS.thr and all_keep grid.
   # store by chromosome, lpthreshold and grid parameters.
   # indices from 1 to nrow(attr(all_keep, "grid")) * length(lpS_thr) are for chromosome 1 and so on
   all_keep <- attr(multi_PRS, "all_keep")
   lpS_thr <- attr(multi_PRS, "grid.lpS.thr")
-
   grids <- attr(all_keep, "grid")
-  print(grids)
-  print(lpS_thr)
   ngrids <- nrow(grids)
   n_thr <- length(lpS_thr)
   nparams <- ngrids * n_thr
 
-  # Save parameters
+  # Save output: parameters
   ixparams <- expand.grid(1:n_thr, 1:ngrids)
   params_df <- grids[ixparams[,2],]
   params_df$lpS_thr <- lpS_thr
@@ -157,12 +155,16 @@ if (is.null(nrow(info_snp))){
   }
   pred_mat <- as.data.frame(pred_mat)
   pred_mat <- cbind(familyID=geno_data$fam$family.ID,
-  sampleID=geno_data$fam$sample.ID, pred_mat)
+    sampleID=geno_data$fam$sample.ID, pred_mat)
 
-  # Saving output
+  # Saving output: PRS
   saveRDS(pred_mat, file=pred_rds)
   write.table(pred_mat, file=pred_csv, sep="\t", row.names = FALSE, col.names = TRUE, quote=FALSE)
+  # Saving output: info_snp
+  write.table(info_snp, file=info_snp_csv, sep="\t", row.names=FALSE, 
+    col.names=TRUE, quote=FALSE)
   t1 <- Sys.time()
+
 }
 
 #---- Compute PRS using model ----
