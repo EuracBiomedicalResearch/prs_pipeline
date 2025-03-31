@@ -100,6 +100,9 @@ if (is.null(nrow(info_snp))){
   beta[info_snp[!is_bad,]$`_NUM_ID_`] <- info_snp[!is_bad,]$beta
   lpval <- rep(NA, ncol(G))
   lpval[info_snp[!is_bad,]$`_NUM_ID_`] <- -log10(info_snp[!is_bad,]$p)
+  print(range(lpval))
+  print(min(lpval, na.rm=TRUE))
+  print(max(lpval, na.rm=TRUE))
 
   t1 <- Sys.time()
   #---- Clumping optimizer ----
@@ -117,6 +120,8 @@ if (is.null(nrow(info_snp))){
   t1 <- Sys.time()
   #---- Thresholding ----
   # TODO: add pvalue threshold as parameter
+  print(max(0.1, min(lpval, na.rm = TRUE)))
+  print(max(lpval, na.rm = TRUE))
   cat("Start thresholding...\n")
   multi_PRS <- snp_grid_PRS(
     G,

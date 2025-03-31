@@ -53,6 +53,15 @@ if (!is.null(format_names)){
 # 2. From GWASlab to bigsnpr
 setnames(gwas_data, names(fmt_2_R), as.character(fmt_2_R), skip_absent = TRUE)
 
+#---- Compute p_value if only MLOG10P is available ----
+if (sum(names(gwas_data) == "p") == 0){
+  if (sum(names(gwas_data) == "MLOG10P") == 1){
+    gwas_data[ , p:=10**(-1 * MLOG10P)]
+  } else {
+    stop("No valid pvalue column")
+  }
+}
+
 #---- Change chromosome name if genome_build is hg38 ----
 # Column: chr
 #         "chr1" -> "1"

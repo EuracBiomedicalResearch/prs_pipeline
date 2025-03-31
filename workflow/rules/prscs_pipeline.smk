@@ -1,8 +1,9 @@
 rule gwas_for_prscs:
   input:
-    gwas_rds = os.path.join(odir, "gwas.rds")
+    gwas_rds = os.path.join(odir, "gwas.rds"),
+    bim_file = os.path.join(geno_dir, "qc_geno_chr{chrom}_rsid.bim")
   output:
-    gwas_prscs = os.path.join(odir, "gwas_prscs.csv")
+    gwas_prscs = os.path.join(odir, "gwas_prscs_chr{chrom}.csv")
   resources:
     mem_mb = get_mem_mb
   conda:
@@ -26,7 +27,7 @@ rule annotate_bim:
 # TODO: Add N of the GWAS as input parameter
 rule run_prscs:
   input:
-    gwas_prscs = os.path.join(odir, "gwas_prscs.csv"),
+    gwas_prscs = os.path.join(odir, "gwas_prscs_chr{chrom}.csv"),
     bim =  os.path.join(geno_dir, "qc_geno_chr{chrom}_rsid.bim"),
     ldref = ancient(get_ldblk_files())
   output:
@@ -36,7 +37,8 @@ rule run_prscs:
     # prefixld = lambda wildcards, input: os.path.dirname(input.ldref),
     prefixld = get_ldblk_dir(),
     prefixbim = lambda wildcards, input: input.bim.replace(".bim", ""),
-    prefixout = lambda wildcards, output: os.path.dirname(output.beta_prscs) + "/"
+    prefixout = lambda wildcards, output: os.path.dirname(output.beta_prscs) + "/",
+    infosnp = get_snp_info()
   resources:
     mem_mb=get_mem_mb
   conda:

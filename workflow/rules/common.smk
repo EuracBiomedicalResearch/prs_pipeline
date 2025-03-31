@@ -115,6 +115,13 @@ def get_ldblk_dir():
   mydir = os.path.join(resource_dir, "ldblk_{data}_{population}")
   return mydir.format(**{"data": lddata, "population": ldpop})
 
+def get_snp_info():
+  mydir = os.path.join(resource_dir, "ldblk_{data}_{population}",
+    "snp_info_{data}_hm3")
+  if genotype_conf["build"] == "hg38":
+    mydir + "_hg38"
+  return mydir.format(**{"data": lddata, "population": ldpop})
+
 def prscs_beta_collect(wildcards):
   return expand(os.path.join(
     config["output_dir"], "{{pheno}}", 

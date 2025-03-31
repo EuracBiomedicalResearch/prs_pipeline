@@ -6,6 +6,7 @@ rule prs_CT:
     map_data = os.path.join(geno_dir, "qc_geno_chr{chrom}_map.rds"),
     gwas_data = os.path.join(odir, "gwas.rds")
   resources:
+    # mem_mb = lambda wc, input: max(3*input.size_mb, 8000)
     mem_mb = get_mem_mb
   output:
     # clump_opt = os.path.join(odir, "sct/clump_res_ct_chr{chrom}.rds"),

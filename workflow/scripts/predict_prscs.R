@@ -61,7 +61,7 @@ betas <- data.table::fread(beta_file, header=FALSE,
 
 if (nrow(betas) == 0){
   pred_mat <- data.table(family.ID=geno$fam$family.ID, 
-    sampleID=geno$fam$sample.ID, PRS=0)
+    sample.ID=geno$fam$sample.ID, PRS=0)
   saveRDS(pred_mat, file=pred_file)
 
   # Touch map file
@@ -96,7 +96,7 @@ if (nrow(betas) == 0){
 
   #---- Save predictions ----
   # exporttdf <- data.table(AID=geno$fam$sample.ID, prs_prscs=prscs_pred)
-  prs <- data.table(family.ID=geno$fam$family.ID, sampleID=geno$fam$sample.ID, PRS=prscs_pred)
+  prs <- data.table(family.ID=geno$fam$family.ID, sample.ID=geno$fam$sample.ID, PRS=prscs_pred)
   # save RDS
   saveRDS(prs, file=pred_file)
 

@@ -38,11 +38,14 @@ def main(bimfile, rsidfile, chrom, outfile="out_annot.bim"):
     for j, r in enumerate(bimdf.iterrows()):
         pp = r[1]['POS']
         try:
-            rs = regions_rsids.loc[pp, :]
-            rsarr = rs.to_numpy()
-            if len(rsarr.shape) == 1:
-                rsarr = rsarr.reshape((1, rsarr.shape[0]))
-            rid = compare_alleles(r, rsarr)
+            rs = regions_rsids.loc[regions_rsids["POS"] == pp, :]
+            if rs.shape[0] > 0:
+                rsarr = rs.to_numpy()
+                if len(rsarr.shape) == 1:
+                    rsarr = rsarr.reshape((1, rsarr.shape[0]))
+                rid = compare_alleles(r, rsarr)
+            else:
+                raise KeyError
         except KeyError:
             rid = r[1]["ID"]
 
