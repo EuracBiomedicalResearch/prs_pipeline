@@ -97,12 +97,14 @@ if (is.null(nrow(info_snp))){
   #---- Create Beta and LogP vector ----
   cat("Creating betas and logs...", "\n")
   beta <- rep(NA, ncol(G))
-  beta[info_snp[!is_bad,]$`_NUM_ID_`] <- info_snp[!is_bad,]$beta
+  beta[info_snp[!is_bad, ]$`_NUM_ID_`] <- info_snp[!is_bad, ]$beta
   lpval <- rep(NA, ncol(G))
-  lpval[info_snp[!is_bad,]$`_NUM_ID_`] <- -log10(info_snp[!is_bad,]$p)
+  lpval[info_snp[!is_bad, ]$`_NUM_ID_`] <- -log10(info_snp[!is_bad, ]$p)
   print(range(lpval))
   print(min(lpval, na.rm=TRUE))
   print(max(lpval, na.rm=TRUE))
+  # Hard code maximum value for LOG10P to the machine limit
+  lpval[lpval == Inf] <- log10(.Machine$double.xmax)
 
   t1 <- Sys.time()
   #---- Clumping optimizer ----
