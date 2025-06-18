@@ -1,4 +1,3 @@
-#!/shared/bioinf/R/bin/Rscript-4.3-BioC3.17
 #---- Libraries ----
 library(dplyr)
 library(stringr)
