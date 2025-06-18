@@ -100,18 +100,16 @@ def get_ldblk_zip():
   return mydir.format(**{"data":lddata, "population": ldpop})
 
 def get_ldblk_files():
-  # lddata = config["ld_data"].lower()
-  # ldpop = config["ld_population"].lower()
-  # nchroms = genotype_conf["nchrom"]
+  ldblk_dir = get_ldblk_dir()
+  mydir = os.path.join(ldblk_dir, "ldblk_{data}_chr{chrom}.hdf5")
+  ldblk_files = expand(mydir, data=[lddata], population=[ldpop], 
+                chrom=range(1, 22))
+  ldblk_files.append(os.path.join(
+    ldblk_dir, "snpinfo_{data}_hm3").format(**{"data": lddata}))
   
-  mydir = os.path.join(resource_dir, "ldblk_{data}_{population}", "ldblk_{data}_chr{chrom}.hdf5")
-  return expand(mydir, data=[lddata], population=[ldpop], 
-                chrom=range(1, 22))   
+  return ldblk_files
 
-def get_ldblk_dir():
-  # lddata = config["ld_data"].lower()
-  # ldpop = config["ld_population"].lower()
-  
+def get_ldblk_dir():  
   mydir = os.path.join(resource_dir, "ldblk_{data}_{population}")
   return mydir.format(**{"data": lddata, "population": ldpop})
 
@@ -220,6 +218,9 @@ def get_formatbooks():
 
 def lift_ld_ref():
   return os.path.join(get_ldblk_dir(), f"snpinfo_{lddata}_hm3_hg38")
+
+def snp_info():
+  return(os.path.join(get_ldblk_dir(), f"snpinfo_{lddata}_hm3"))
 
 # Dynamic mem requests
 def get_mem_mb(wildcards, attempt):

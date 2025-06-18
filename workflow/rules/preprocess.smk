@@ -241,7 +241,7 @@ rule get_rsid:
   message:
     "Download rsid database"
   output:
-    rsid_file = protected(rsidfilevar)
+    rsid_file = rsidfilevar
   params:
     rsfile = lambda wildcards, output: os.path.basename(output.rsid_file).replace("index.gz", "tsv.gz"),
     resource_dir = resource_dir

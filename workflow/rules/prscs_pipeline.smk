@@ -137,16 +137,16 @@ rule get_ld_ref_prscs:
     then
       wget -O {params.odir} {params.url}
     fi
-    tar -zxvf {params.odir} -C resources
+    tar -zxvf {params.odir} -C {resource_dir}
     """
 
 rule lift_reference:
   message:
     "Lift LD reference for PRScs"
   input:
-    snp_info = os.path.join(get_ldblk_dir(), f"snpinfo{{lddata}}_hm3")
+    snp_info = snp_info()
   output:
-    snp_info_out = os.path.join(get_ldblk_dir(), f"snpinfo{{lddata}}_hm3_hg38")
+    snp_info_out = lift_ld_ref()
   conda:
     "../envs/prscs.yaml"
   script:
