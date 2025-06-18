@@ -29,7 +29,8 @@ rule run_prscs:
   input:
     gwas_prscs = os.path.join(odir, "gwas_prscs_chr{chrom}.csv"),
     bim =  os.path.join(geno_dir, "qc_geno_chr{chrom}_rsid.bim"),
-    ldref = ancient(get_ldblk_files())
+    ldref = ancient(get_ldblk_files()),
+    infosnp = get_snp_info()
   output:
     beta_prscs = os.path.join(odir, "prscs/_pst_eff_a1_b0.5_phiauto_chr{chrom}.txt")
   params:
@@ -38,7 +39,7 @@ rule run_prscs:
     prefixld = get_ldblk_dir(),
     prefixbim = lambda wildcards, input: input.bim.replace(".bim", ""),
     prefixout = lambda wildcards, output: os.path.dirname(output.beta_prscs) + "/",
-    infosnp = get_snp_info()
+    
   resources:
     mem_mb=get_mem_mb
   conda:
@@ -51,7 +52,8 @@ rule run_prscs:
     --sst_file={input.gwas_prscs} \
     --n_gwas=500000 \
     --out_dir={params.prefixout} \
-    --chrom={wildcards.chrom}
+    --chrom={wildcards.chrom} \
+    --info_file={input.infosnp}
     """
 
 rule move_and_collect:

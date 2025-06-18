@@ -2,7 +2,7 @@ jobs: 500
 printshellcmds: True 
 conda-frontend: mamba
 use-conda: True
-executor: slurm
+executor: local
 
 restart-times: 3
 
@@ -11,7 +11,6 @@ default-resources:
   mem_mb: 8000
   retries: 3
   threads: 1
-  slurm_partition: batch-mc2
 
 # Rule specific resources
 set-mem_mb:
