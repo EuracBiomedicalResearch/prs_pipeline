@@ -1,10 +1,11 @@
 rule gwas_for_prscs:
   input:
-    gwas_rds = os.path.join(odir, "gwas.rds")
+    gwas_rds = os.path.join(odir, "gwas.rds"),
+    bim_file = os.path.join(geno_dir, "qc_geno_chr{chrom}_rsid.bim")
   output:
-    gwas_prscs = os.path.join(odir, "gwas_prscs.csv")
+    gwas_prscs = os.path.join(odir, "gwas_prscs_chr{chrom}.csv")
   resources:
-    mem_mb = 16000
+    mem_mb = get_mem_mb
   conda:
     "../envs/bigsnpr.yaml"
   script:
@@ -19,18 +20,17 @@ rule annotate_bim:
   conda:
     "../envs/bcftools.yaml"
   resources:
-    mem_mb = 8000
+    mem_mb = get_mem_mb
   script:
     "../scripts/reannotate_bim_files_2.py"
 
-# TODO: When a single chromosome is provided PRS-CS 
-# expect the input should divided by chromosomes. The chrom argument 
-# to the function should be provided
+# TODO: Add N of the GWAS as input parameter
 rule run_prscs:
   input:
-    gwas_prscs = os.path.join(odir, "gwas_prscs.csv"),
+    gwas_prscs = os.path.join(odir, "gwas_prscs_chr{chrom}.csv"),
     bim =  os.path.join(geno_dir, "qc_geno_chr{chrom}_rsid.bim"),
-    ldref = ancient(get_ldblk_files())
+    ldref = ancient(get_ldblk_files()),
+    infosnp = get_snp_info()
   output:
     beta_prscs = os.path.join(odir, "prscs/_pst_eff_a1_b0.5_phiauto_chr{chrom}.txt")
   params:
@@ -38,10 +38,10 @@ rule run_prscs:
     # prefixld = lambda wildcards, input: os.path.dirname(input.ldref),
     prefixld = get_ldblk_dir(),
     prefixbim = lambda wildcards, input: input.bim.replace(".bim", ""),
-    prefixout = lambda wildcards, output: os.path.dirname(output.beta_prscs) + "/"
+    prefixout = lambda wildcards, output: os.path.dirname(output.beta_prscs) + "/",
+    
   resources:
-    mem_mb=16000
-  threads: 8
+    mem_mb=get_mem_mb
   conda:
     "../envs/prscs.yaml"
   shell:
@@ -52,7 +52,8 @@ rule run_prscs:
     --sst_file={input.gwas_prscs} \
     --n_gwas=500000 \
     --out_dir={params.prefixout} \
-    --chrom={wildcards.chrom}
+    --chrom={wildcards.chrom} \
+    --info_file={input.infosnp}
     """
 
 rule move_and_collect:
@@ -63,7 +64,7 @@ rule move_and_collect:
   output:
     beta_shrinked = os.path.join(odir, "prscs/beta_all.txt")
   resources:
-    mem_mb = 8000
+    mem_mb = get_mem_mb
   shell:
     """
     cat {input.beta_prscs} > {output.beta_shrinked}
@@ -71,24 +72,55 @@ rule move_and_collect:
 
 rule predict_prscs:
   input:
-    bim = expand(os.path.join(geno_dir, "qc_geno_chr{chrom}_rsid.bim"), 
-                 chrom=range(1, genotype_conf["nchrom"] + 1)),
-    beta_shrinked = os.path.join(odir, "prscs/beta_all.txt"),
-    genotype_rds = os.path.join(geno_dir, "qc_geno_all.rds"),
+    bim = os.path.join(geno_dir, "qc_geno_chr{chrom}_rsid.bim"),
+    beta_shrinked = os.path.join(odir, "prscs/_pst_eff_a1_b0.5_phiauto_chr{chrom}.txt"),
+    genotype_rds = os.path.join(geno_dir, "qc_geno_chr{chrom}.rds")
   output:
-    pred_file = os.path.join(odir, "prscs/prs.rds"),
-    pred_csv = os.path.join(odir, "prscs/prs.csv"),
-    map_file = os.path.join(odir, "prscs/map_prs.rds"),
-  params: 
+    pred_file = os.path.join(odir, "prscs/pred_chr{chrom}.rds"),
+    map_file = os.path.join(odir, "prscs/map_chr{chrom}.rds"),
+  params:
     gwas_conf = lookup("{pheno}", within=gwases),
     ld_dir = get_ldblk_dir(),
     lddata = lddata
-  resources:
-    mem_mb=12000
   conda:
     "../envs/bigsnpr.yaml"
   script:
     "../scripts/predict_prscs.R"
+
+
+rule collect_prscs:
+  input:
+    pred_file = expand_chrom(os.path.join(odir, "prscs/pred_chr{chrom}.rds"))
+  output:
+    pred_rds = os.path.join(odir, "prscs/prs.rds"),
+    pred_csv = os.path.join(odir, "prscs/prs.csv"),
+  resources:
+    mem_mb=get_mem_mb
+  conda:
+    "../envs/bigsnpr.yaml"
+  script:
+    "../scripts/collect_prscs_prs.R"
+  
+# rule predict_prscs:
+#   input:
+#     bim = expand(os.path.join(geno_dir, "qc_geno_chr{chrom}_rsid.bim"), 
+#                  chrom=range(1, genotype_conf["nchrom"] + 1)),
+#     beta_shrinked = os.path.join(odir, "prscs/beta_all.txt"),
+#     genotype_rds = os.path.join(geno_dir, "qc_geno_all.rds"),
+#   output:
+#     pred_file = os.path.join(odir, "prscs/prs.rds"),
+#     pred_csv = os.path.join(odir, "prscs/prs.csv"),
+#     map_file = os.path.join(odir, "prscs/map_prs.rds"),
+#   params: 
+#     gwas_conf = lookup("{pheno}", within=gwases),
+#     ld_dir = get_ldblk_dir(),
+#     lddata = lddata
+#   resources:
+#     mem_mb=12000
+#   conda:
+#     "../envs/bigsnpr.yaml"
+#   script:
+#     "../scripts/predict_prscs.R"
 
 
 rule get_ld_ref_prscs:
@@ -107,16 +139,16 @@ rule get_ld_ref_prscs:
     then
       wget -O {params.odir} {params.url}
     fi
-    tar -zxvf {params.odir} -C resources
+    tar -zxvf {params.odir} -C {resource_dir}
     """
 
 rule lift_reference:
   message:
     "Lift LD reference for PRScs"
   input:
-    snp_info = os.path.join(get_ldblk_dir(), f"snpinfo{{lddata}}_hm3")
+    snp_info = snp_info()
   output:
-    snp_info_out = os.path.join(get_ldblk_dir(), f"snpinfo{{lddata}}_hm3_hg38")
+    snp_info_out = lift_ld_ref()
   conda:
     "../envs/prscs.yaml"
   script:

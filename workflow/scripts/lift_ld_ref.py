@@ -35,7 +35,7 @@ def main(input_file="snpinfo_ukbb_hm3", outfile=None):
     snpinfo = pd.read_csv(input_file, sep="\t")
 
     # Add column to keep conversion to hg38
-    snpinfo["CHR_hg38"] = ""
+    snpinfo["CHR_hg38"] = "0"
     snpinfo["BP_hg38"] = -1
 
     i = 0
@@ -44,7 +44,13 @@ def main(input_file="snpinfo_ukbb_hm3", outfile=None):
         if i % 1000 == 0:
             print(f"Computing row: {i}", end="\r")
         if cc:
-            snpinfo.loc[pos, "CHR_hg38"] = cc[0][0]
+            # remove chr string from chromosome
+            mychr = cc[0][0].replace("chr", "")
+            try:
+                int(mychr)
+            except ValueError:
+                mychr = "0"
+            snpinfo.loc[pos, "CHR_hg38"] = mychr
             snpinfo.loc[pos, "BP_hg38"] = cc[0][1]
         i += 1
 
@@ -73,10 +79,11 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--dataset", default="ukbb", required=False)
     parser.add_argument("-p", "--population", default="eur", required=False)
 
-    if snakemake.input["snp_info"]:
+    # if snakemake.input["snp_info"]:
+    try:
         input_file = snakemake.input["snp_info"]
         output_file = snakemake.output["snp_info_out"]
-    else:
+    except NameError:
         args = parser.parse_args()
         ldref_dir = f"ldblk_{args.dataset.lower()}_{args.population.lower()}"
         input_file = os.path.join(args.basedir, ldref_dir, f"snpinfo_{args.dataset.lower()}_hm3")

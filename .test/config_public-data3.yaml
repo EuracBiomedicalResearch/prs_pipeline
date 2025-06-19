@@ -33,7 +33,7 @@ cache_dir: "resources"
 # PRS-method activation
 prs_algorithms:
   ldpred2:
-    activate: true
+    activate: false
   lassosum2:
     activate: true
   prscs:

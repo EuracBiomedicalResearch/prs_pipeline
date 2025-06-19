@@ -3,6 +3,7 @@ import os
 import itertools as it
 from snakemake.utils import validate
 from snakemake.rules import expand
+from snakemake import resources
 
 # Validate the config file
 validate(config, schema="../schemas/config.schema.yaml")
@@ -15,11 +16,6 @@ validate(genotype_conf, schema="../schemas/genotype_json.schema.yaml")
 odir = os.path.join(config["output_dir"], "{pheno}")
 data_dir = config["data_dir"]
 geno_dir = os.path.join(data_dir, "geno")
-
-# Create directory if they do not exists
-# os.makedirs(config["output_dir", exist_ok=True)
-# os.makedirs(data_dir, exist_ok=True)
-# os.makedirs(geno_dir, exist_ok=True)
 
 # Create resource directory and check existence
 resource_dir = config["cache_dir"]
@@ -49,36 +45,22 @@ hm3corr = expand(os.path.join(hm3path, "ldref_hm3_plus", "LD_with_blocks_chr{chr
 hm3map = os.path.join(hm3path, "map_hm3_plus.rds")
 hm3matout = os.path.join(hm3path, "ldref_hm3_plus")
 
-
 # Get LD reference configuration
 ldref = config["ld_reference"]
 lddata = ldref["data"].lower()
 ldpop = ldref["population"].lower()
-
 
 def add_plink_ext(infile):
   myext = ["bed", "bim", "fam"]
   return {k: infile + f".{k}" for k in myext}
 
 def get_reference(wildcards):
-  # if genotype_conf["nchrom"] == 1:
-  #   ref_files = genotype_conf["plinkfiles"]["1"]
-  # else:
-  # file_format = genotype_conf["format"]
-  # if genotype_conf["divided_by_chrom"]:
-  #   if file_format == "plink":
-  #     ref_files = genotype_conf["files"][wildcards.chrom]
-  #   elif file_format == "vcf":
-  #     ref_files = genotype_conf["files"][wildcards.chrom]
-  #     ref_files = os.path.basename(ref_files).replace("vcf.gz", "")
-  #     ref_files = os.path.join("tmp-data/geno", ref_files)
-  # else:
-  #   ref_files = genotype_conf["files"][wildcards.chrom]
   ref_files = os.path.join(geno_dir, "geno_chr{chrom}")
   out_dict = add_plink_ext(ref_files)
   return out_dict
 
 def get_reference2(wildcards):
+  # TODO: allow for different number of chromosome
   nchrom = 22
   flist = expand(os.path.join(geno_dir, "qc_geno_chr{chrom}{ext}"), chrom=range(1, nchrom + 1), 
                ext=[".bed", ".bim", ".fam"])
@@ -118,19 +100,24 @@ def get_ldblk_zip():
   return mydir.format(**{"data":lddata, "population": ldpop})
 
 def get_ldblk_files():
-  # lddata = config["ld_data"].lower()
-  # ldpop = config["ld_population"].lower()
-  # nchroms = genotype_conf["nchrom"]
+  ldblk_dir = get_ldblk_dir()
+  mydir = os.path.join(ldblk_dir, "ldblk_{data}_chr{chrom}.hdf5")
+  ldblk_files = expand(mydir, data=[lddata], population=[ldpop], 
+                chrom=range(1, 22))
+  ldblk_files.append(os.path.join(
+    ldblk_dir, "snpinfo_{data}_hm3").format(**{"data": lddata}))
   
-  mydir = os.path.join(resource_dir, "ldblk_{data}_{population}", "ldblk_{data}_chr{chrom}.hdf5")
-  return expand(mydir, data=[lddata], population=[ldpop], 
-                chrom=range(1, 22))   
+  return ldblk_files
 
-def get_ldblk_dir():
-  # lddata = config["ld_data"].lower()
-  # ldpop = config["ld_population"].lower()
-  
+def get_ldblk_dir():  
   mydir = os.path.join(resource_dir, "ldblk_{data}_{population}")
+  return mydir.format(**{"data": lddata, "population": ldpop})
+
+def get_snp_info():
+  mydir = os.path.join(resource_dir, "ldblk_{data}_{population}",
+    "snp_info_{data}_hm3")
+  if genotype_conf["build"] == "hg38":
+    mydir + "_hg38"
   return mydir.format(**{"data": lddata, "population": ldpop})
 
 def prscs_beta_collect(wildcards):
@@ -162,11 +149,11 @@ def target_rule_preproc_bychr():
   return genofiles
 
 
-# SCT PRS
-def target_rule_sct():
-  return {"clump": expand(os.path.join(odir, "sct/clump_res_ct.rds"), pheno=gwas_traits),
-   "multi_rds": expand(os.path.join(odir, "sct/multi_prs_ct.rds"), pheno=gwas_traits),
-   "multi_bk": expand(os.path.join(odir, "sct/multi_prs_ct.bk"), pheno=gwas_traits)}
+# # SCT PRS
+# def target_rule_sct():
+#   return {"clump": expand(os.path.join(odir, "sct/clump_res_ct.rds"), pheno=gwas_traits),
+#    "multi_rds": expand(os.path.join(odir, "sct/multi_prs_ct.rds"), pheno=gwas_traits),
+#    "multi_bk": expand(os.path.join(odir, "sct/multi_prs_ct.bk"), pheno=gwas_traits)}
  
 # GWAS
 def target_rule_gwas():
@@ -177,7 +164,9 @@ def get_algs():
   """This function returns the activate algorithms
   """
   algs = []
+
   for k,v in config["prs_algorithms"].items():
+
     try:
       if v["activate"]:
         algs.append(k.lower())
@@ -188,6 +177,7 @@ def get_algs():
 
 # Define target rule for computing the PRSs
 def target_rule_prs():
+
   output_files = []
   algs = get_algs()
   # for k, v in config["prs_algorithms"].items():
@@ -207,7 +197,14 @@ def target_rule_plots():
   ofiles = [expand(os.path.join(odir, "bad_variants.png"), pheno=gwas_traits),
   expand(os.path.join(odir, "beta_distribution.png"), pheno=gwas_traits)]
   return ofiles
- 
+
+def target_rule_dist():
+  algs = get_algs()
+  phenos = gwas_traits
+  ofiles = [expand(os.path.join(odir, "prs_dist_{algorithm}.png"), 
+  pheno=phenos, algorithm=algs)]
+  return ofiles
+
 # def target_rule_report():
 #   algs = get_algs()
 #   alg_path = [os.path.join(odir, a) for a in algs]
@@ -216,33 +213,18 @@ def target_rule_plots():
 
 #   return output_files
 
-
 def get_formatbooks():
   return os.path.join(resource_dir, "formatbook", "formatbook.json")
 
 def lift_ld_ref():
   return os.path.join(get_ldblk_dir(), f"snpinfo_{lddata}_hm3_hg38")
 
-# def tmp_ld():
-#   alg = "lassosum2"
-#   alg_path = os.path.join(odir, alg)
-#   ff = expand(os.path.join(alg_path, "beta_auto_chr{chrom}_ldpred2.rds"), 
-#   chrom=range(1,23), 
-#   pheno=gwas_traits)
-#   print(ff)
-#   return ff
+def snp_info():
+  return(os.path.join(get_ldblk_dir(), f"snpinfo_{lddata}_hm3"))
 
-
-# # PRS-CS
-# def target_rule_prscs():
-
-#   return {"pred_prscs": expand("results/{pheno}/prscs/prs{ext}", 
-#                                pheno=gwas_traits, ext=[".rds", ".csv"]),
-#           "map_prscs": expand("results/{pheno}/prscs/map_prs.rds", pheno=gwas_traits)}
-
-# # LDPred2
-# def target_rule_ldpred2():
-#   return {"pred_ldpred2": expand("results/{pheno}/ldpred2/prs{ext}", pheno=gwas_traits,
-#                                 ext=[".rds", ".csv"])}
+# Dynamic mem requests
+def get_mem_mb(wildcards, attempt):
+  default_mem = workflow.resource_settings.default_resources.parsed['mem_mb']
+  return attempt * default_mem
 
 

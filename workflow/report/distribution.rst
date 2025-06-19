@@ -1,0 +1,1 @@
+This figure shows the distribution of the PRS computed using algorithm {{ snakemake.wildcards.algorithm }}.

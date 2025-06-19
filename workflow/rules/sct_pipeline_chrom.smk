@@ -5,15 +5,17 @@ rule prs_CT:
     geno_data = os.path.join(geno_dir, "qc_geno_chr{chrom}.rds"),
     map_data = os.path.join(geno_dir, "qc_geno_chr{chrom}_map.rds"),
     gwas_data = os.path.join(odir, "gwas.rds")
-  threads: 8
   resources:
-    mem_mb = 12000
+    # mem_mb = lambda wc, input: max(3*input.size_mb, 8000)
+    mem_mb = get_mem_mb
   output:
-    clump_opt = os.path.join(odir, "sct/clump_res_ct_chr{chrom}.rds"),
-    multi_prs = os.path.join(odir, "sct/multi_prs_ct_chr{chrom}.rds"),
-    multi_prs_bk = os.path.join(odir, "sct/multi_prs_ct_chr{chrom}.bk"),
+    # clump_opt = os.path.join(odir, "sct/clump_res_ct_chr{chrom}.rds"),
+    # multi_prs = os.path.join(odir, "sct/multi_prs_ct_chr{chrom}.rds"),
+    # multi_prs_bk = os.path.join(odir, "sct/multi_prs_ct_chr{chrom}.bk"),
     pred_rds = os.path.join(odir, "sct/prs_chr{chrom}.rds"),
-    pred_csv = os.path.join(odir, "sct/prs_chr{chrom}.csv")
+    pred_csv = os.path.join(odir, "sct/prs_chr{chrom}.csv"),
+    params_csv = os.path.join(odir, "sct/params_chr{chrom}.csv"),
+    info_snp_csv = os.path.join(odir, "sct/info_snp_chr{chrom}.csv")
   params:
       force = "FALSE"
   conda:
@@ -25,11 +27,16 @@ rule predict_CT:
   message:
     "Running prediction using CT algorithm"
   input:
-    pred_chrom = expand_chrom(os.path.join(odir, "sct/prs_chr{chrom}.rds"))
+    pred_chrom = expand_chrom(os.path.join(odir, "sct/prs_chr{chrom}.rds")),
+    params_chrom = expand_chrom(os.path.join(odir, "sct/params_chr{chrom}.csv")),
+    info_snp = expand_chrom(os.path.join(odir, "sct/info_snp_chr{chrom}.csv"))
   output:
     pred_rds = os.path.join(odir, "sct/prs.rds"),
     pred_csv = os.path.join(odir, "sct/prs.csv"),
-    params_csv = os.path.join(odir, "sct/prs_params.csv")
+    params_csv = os.path.join(odir, "sct/prs_params.csv"),
+    info_snp_csv = os.path.join(odir, "sct/prs_snps.csv")
+  resources:
+    mem_mb = get_mem_mb
   conda:
     "../envs/bigsnpr.yaml"
   script:

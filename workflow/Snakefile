@@ -7,7 +7,7 @@ min_version("8.4.8")
 configfile: "config/config.yaml"
 
 # Setup singularity
-# container: "docker://continuumio/miniconda3"
+container: "docker://continuumio/miniconda3"
 # container: "docker://mambaorg/micromamba"
 
 # Global environment
@@ -21,19 +21,30 @@ include: "rules/sct_pipeline_chrom.smk"
 include: "rules/prscs_pipeline.smk"
 include: "rules/ldpred2_pipeline_chrom.smk"
 include: "rules/gwas.smk"
+include: "rules/report.smk"
 
 # Target rule
 rule all:
   input:
-    # target_rule_preproc(), 
     target_rule_preproc_bychr(),
-    # "data/geno/qc_geno_all_map_gendist.rds",
     target_rule_gwas(),
     target_rule_prs(),
+    target_rule_dist(),
     lift_ld_ref()
-    # **target_rule_prscs(),
-    # **target_rule_ldpred2()
-    # **target_rule_sct()
+
+rule all_prs:
+  input:
+    target_rule_prs()
+
+rule gwas:
+  input:
+    target_rule_gwas()
+
 rule all_plots:
   input:
-    target_rule_plots()
+    target_rule_dist()
+
+# TODO: Add export of variants used for computation of PRS
+# TODO: Add algorithm based parameters to set
+# TODO: Adapt pipeline to work with sBayesR
+# TODO: Add sBayesRS pipeline
